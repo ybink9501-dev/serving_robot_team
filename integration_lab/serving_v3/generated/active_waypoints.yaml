@@ -1,0 +1,71 @@
+map_revision: 2
+waypoints:
+- id: wp_kitchen
+  entity_id: kitchen
+  pose: &id001
+    x: -2.3
+    y: 1.45
+    yaw: 1.570796
+- id: wp_counter_pickup
+  entity_id: counter_pickup
+  pose: *id001
+- id: wp_table_01_top
+  entity_id: table_01_top
+  pose: &id002
+    x: -1.6
+    y: 1.6
+    yaw: -1.570796
+- id: wp_table_01_bottom
+  entity_id: table_01_bottom
+  pose:
+    x: -1.6
+    y: -0.3
+    yaw: 1.570796
+- id: wp_table_01
+  entity_id: table_01
+  pose: *id002
+- id: wp_table_02_top
+  entity_id: table_02_top
+  pose: &id003
+    x: 1.55
+    y: 1.6
+    yaw: -1.570796
+- id: wp_table_02_bottom
+  entity_id: table_02_bottom
+  pose:
+    x: 1.55
+    y: -0.3
+    yaw: 1.570796
+- id: wp_table_02
+  entity_id: table_02
+  pose: *id003
+- id: wp_table_03_top
+  entity_id: table_03_top
+  pose: &id004
+    x: -1.6
+    y: -0.5
+    yaw: -1.570796
+- id: wp_table_03_bottom
+  entity_id: table_03_bottom
+  pose:
+    x: -1.6
+    y: -2.4
+    yaw: 1.570796
+- id: wp_table_03
+  entity_id: table_03
+  pose: *id004
+- id: wp_table_04_top
+  entity_id: table_04_top
+  pose: &id005
+    x: 1.55
+    y: -0.5
+    yaw: -1.570796
+- id: wp_table_04_bottom
+  entity_id: table_04_bottom
+  pose:
+    x: 1.55
+    y: -2.4
+    yaw: 1.570796
+- id: wp_table_04
+  entity_id: table_04
+  pose: *id005

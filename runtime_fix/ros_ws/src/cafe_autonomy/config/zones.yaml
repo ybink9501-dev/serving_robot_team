@@ -1,0 +1,5 @@
+# Example SETUP semantic zones. Must be reviewed against the measured SLAM map.
+# Values are NOT Gazebo Ground Truth or approved operational coordinates.
+zones:
+  kitchen_access: [-3.75, -0.90, 0.72, 2.35]
+  central_lane: [-0.60, 0.60, -2.45, 2.20]

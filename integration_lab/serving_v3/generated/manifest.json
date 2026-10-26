@@ -1,0 +1,287 @@
+{
+  "occupancy_binary_sha256": "665836c297e6f5005690c69d8745910860de35ecb825fd193cb66686f2e96999",
+  "world": "/home/user/team_serving_robot/ros_ws/src/serving_robot_gazebo/worlds/cafe.world.sdf",
+  "world_sha256": "28ff62c3e58e7c5c8bd681b59203ca10e629d051a4c0db5e81c3cb493229dd2e",
+  "map": "/home/user/team_robot_lab/lab_maps/generated/cafe_full_provisional.yaml",
+  "map_yaml_sha256": "b37f619b873fa945ed442c47e304de854acef55c5d58e83629201b6dce4c30aa",
+  "map_raster": "/home/user/team_robot_lab/lab_maps/generated/cafe_full_provisional.pgm",
+  "map_raster_sha256": "71a8f6d45b70c67851bed598a442d031035ef176f46f0f1a21f30f749a71ac94",
+  "layout_sha256": "cd5341f3991e80fe5ba14ae5155cba88280fa3657b5973a008870f7f941f6a4e",
+  "robot_id": "robot_01",
+  "map_revision": 2,
+  "map_info": {
+    "width": 212,
+    "height": 172,
+    "resolution": 0.05,
+    "origin": [
+      -5.3,
+      -4.3,
+      0.0
+    ]
+  },
+  "waypoints_sha256": "5522d29a7b5cc2a62f5fab600887be5d249c64788509adfa946672f220c68533",
+  "choices": {
+    "table_01": [
+      {
+        "id": "table_01_top",
+        "side": "top",
+        "pose": {
+          "x": -1.6,
+          "y": 1.6,
+          "yaw": -1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_01_bottom",
+        "side": "bottom",
+        "pose": {
+          "x": -1.6,
+          "y": -0.3,
+          "yaw": 1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_01_left",
+        "side": "left",
+        "pose": {
+          "x": -2.95,
+          "y": 0.65,
+          "yaw": 0.0
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      },
+      {
+        "id": "table_01_right",
+        "side": "right",
+        "pose": {
+          "x": -0.25,
+          "y": 0.65,
+          "yaw": 3.141593
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      }
+    ],
+    "table_02": [
+      {
+        "id": "table_02_top",
+        "side": "top",
+        "pose": {
+          "x": 1.55,
+          "y": 1.6,
+          "yaw": -1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_02_bottom",
+        "side": "bottom",
+        "pose": {
+          "x": 1.55,
+          "y": -0.3,
+          "yaw": 1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_02_left",
+        "side": "left",
+        "pose": {
+          "x": 0.2,
+          "y": 0.65,
+          "yaw": 0.0
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      },
+      {
+        "id": "table_02_right",
+        "side": "right",
+        "pose": {
+          "x": 2.9,
+          "y": 0.65,
+          "yaw": 3.141593
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      }
+    ],
+    "table_03": [
+      {
+        "id": "table_03_top",
+        "side": "top",
+        "pose": {
+          "x": -1.6,
+          "y": -0.5,
+          "yaw": -1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_03_bottom",
+        "side": "bottom",
+        "pose": {
+          "x": -1.6,
+          "y": -2.4,
+          "yaw": 1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_03_left",
+        "side": "left",
+        "pose": {
+          "x": -2.95,
+          "y": -1.45,
+          "yaw": 0.0
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      },
+      {
+        "id": "table_03_right",
+        "side": "right",
+        "pose": {
+          "x": -0.25,
+          "y": -1.45,
+          "yaw": 3.141593
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      }
+    ],
+    "table_04": [
+      {
+        "id": "table_04_top",
+        "side": "top",
+        "pose": {
+          "x": 1.55,
+          "y": -0.5,
+          "yaw": -1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_04_bottom",
+        "side": "bottom",
+        "pose": {
+          "x": 1.55,
+          "y": -2.4,
+          "yaw": 1.570796
+        },
+        "enabled": true,
+        "clearance_ok": true,
+        "reason": "enabled"
+      },
+      {
+        "id": "table_04_left",
+        "side": "left",
+        "pose": {
+          "x": 0.2,
+          "y": -1.45,
+          "yaw": 0.0
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      },
+      {
+        "id": "table_04_right",
+        "side": "right",
+        "pose": {
+          "x": 2.9,
+          "y": -1.45,
+          "yaw": 3.141593
+        },
+        "enabled": false,
+        "clearance_ok": true,
+        "reason": "chairs_block_service_face"
+      }
+    ]
+  },
+  "entities": [
+    {
+      "id": "table_01",
+      "gazebo_model": "table_set_01",
+      "center_world": [
+        -1.6,
+        0.65
+      ],
+      "center_map": [
+        -1.6,
+        0.65
+      ]
+    },
+    {
+      "id": "table_02",
+      "gazebo_model": "table_set_02",
+      "center_world": [
+        1.55,
+        0.65
+      ],
+      "center_map": [
+        1.55,
+        0.65
+      ]
+    },
+    {
+      "id": "table_03",
+      "gazebo_model": "table_set_03",
+      "center_world": [
+        -1.6,
+        -1.45
+      ],
+      "center_map": [
+        -1.6,
+        -1.45
+      ]
+    },
+    {
+      "id": "table_04",
+      "gazebo_model": "table_set_04",
+      "center_world": [
+        1.55,
+        -1.45
+      ],
+      "center_map": [
+        1.55,
+        -1.45
+      ]
+    }
+  ],
+  "pickup_pose": {
+    "x": -2.3,
+    "y": 1.45,
+    "yaw": 1.570796
+  },
+  "blocked_candidates": [],
+  "limitations": [
+    "SDF aligned LAB only, NOT authoritative SLAM map",
+    "No actual LiDAR localization or physical arrival test",
+    "Mapped stops may conflict between two robots; Fleet zone/slot locking required",
+    "Left/right approaches with chairs are inactive"
+  ]
+}

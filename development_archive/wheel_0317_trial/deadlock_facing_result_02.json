@@ -1,0 +1,30 @@
+{
+  "started": 1792948767.7235754,
+  "error": "TF did not follow Gazebo placement: ('robot_01', [0.041130465947099, 0.0063121842967617525], (2.25, 3.85))",
+  "trials": {
+    "robot_01": {
+      "table": "table_02",
+      "request_id": "deadlockfacing-robot_01-1792948802",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockfacing-robot_01-1792948802",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      }
+    },
+    "robot_02": {
+      "table": "table_01",
+      "request_id": "deadlockfacing-robot_02-1792948802",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockfacing-robot_02-1792948802",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      }
+    }
+  }
+}

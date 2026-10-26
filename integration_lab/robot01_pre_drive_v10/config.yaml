@@ -1,0 +1,21 @@
+schema_version: 1
+robot_id: robot_01
+ros_domain_id: 99
+v3_dir: ~/team_robot_lab/serving_v3
+v6_dir: ~/team_robot_lab/robot01_pretest_v6
+v7_dir: ~/team_robot_lab/robot01_spin_v7
+v8_dir: ~/team_robot_lab/robot01_localization_v8
+# No automatic relocation and no automatically changing the reviewed pickup coordinate.
+pickup:
+  minimum_body_to_counter_clearance_m: 0.10
+  maximum_face_direction_error_deg: 25.0
+  needs_team_pickup_approval: true
+stall:
+  window_s: 30.0
+  minimum_travel_m: 0.08
+  # Require both low traveled distance and low net displacement in the full window.
+  maximum_path_travel_m: 0.15
+  maximum_odom_age_s: 2.0
+  command_age_s: 3.0
+  enforce_cancel: true
+  # No duplicate velocity publishers, no Nav2 goal creation.

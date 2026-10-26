@@ -1,0 +1,132 @@
+{
+  "started": 1793005281.468194,
+  "stage": {
+    "robot_01": {
+      "request_id": "headonstage-robot_01-1793005321",
+      "table": "table_03",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonstage-robot_01-1793005321",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "wall_time": 1793005356.6208203,
+        "target_pose": [
+          1.6,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonstage-robot_01-1793005321",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    },
+    "robot_02": {
+      "request_id": "headonstage-robot_02-1793005322",
+      "table": "table_04",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonstage-robot_02-1793005322",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "handover": {
+        "wall_time": 1793005353.468981,
+        "target_pose": [
+          4.75,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonstage-robot_02-1793005322",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    }
+  },
+  "active": {
+    "robot_02": {
+      "request_id": "headonserve-robot_02-1793005357",
+      "table": "table_03",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonserve-robot_02-1793005357",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "load": {
+        "ok": true,
+        "action": "LOAD",
+        "request_id": "headonserve-robot_02-1793005357",
+        "robot": "robot_02"
+      },
+      "handover": {
+        "wall_time": 1793005567.2492468,
+        "target_pose": [
+          1.6,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonserve-robot_02-1793005357",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    },
+    "robot_01": {
+      "request_id": "headonmove-robot_01-1793005383",
+      "table": "table_04",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonmove-robot_01-1793005383",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "wall_time": 1793005466.5038884,
+        "target_pose": [
+          4.75,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonmove-robot_01-1793005383",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    }
+  },
+  "trigger_pose": [
+    3.862031628870783,
+    -0.05819414047655496
+  ],
+  "trigger_time": 1793005383.936374,
+  "trace": "/home/user/team_serving_robot_clean_20261022/_local_only/wheel_0317_trial/headon_bottom_trace_02.jsonl",
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_180125.csv"
+}

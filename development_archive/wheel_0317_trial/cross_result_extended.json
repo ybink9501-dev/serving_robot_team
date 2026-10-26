@@ -1,0 +1,54 @@
+{
+  "robot_01": {
+    "table": "table_02",
+    "request_id": "cross08ext-robot_01-1792938120",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "cross08ext-robot_01-1792938120",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_01"
+    },
+    "handover": {
+      "target_pose": [
+        4.75,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.07528197964984659,
+        0.14109193595793323
+      ],
+      "wall_time": 1792938371.146643
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "cross08ext-robot_01-1792938120",
+      "robot": "robot_01"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.07528197964984659,
+      0.14109193595793323
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261025_232132.csv",
+    "actual_error_cm": 8.15138414157305,
+    "tf_gt_cm": 4.043476157727529
+  },
+  "robot_02": {
+    "table": "table_01",
+    "request_id": "cross08ext-robot_02-1792938121",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "cross08ext-robot_02-1792938121",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_02"
+    },
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261025_232132.csv"
+  }
+}

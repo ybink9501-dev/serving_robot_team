@@ -1,0 +1,255 @@
+{
+  "rates_hz": {
+    "/robot_01/scan": 4.260447738341067,
+    "/robot_01/odom": 18.402007063913466,
+    "/robot_01/cmd_vel_nav": 20.510216933902708,
+    "/robot_01/cmd_vel_nav_smooth": 20.510127985779757,
+    "/robot_01/cmd_vel_semantic": 7.708378287480922,
+    "/robot_01/cmd_vel": 7.6630900490634435,
+    "/robot_01/perception_status": 4.171783664297244,
+    "/robot_01/safety_status": 7.709278773168633,
+    "/robot_01/serving/status": 7.697574350349281,
+    "/robot_01/camera/front/image": 4.15873422614116,
+    "/robot_02/scan": 4.260645613972258,
+    "/robot_02/odom": 18.442737734391844,
+    "/robot_02/cmd_vel_semantic": 7.724383794084508,
+    "/robot_02/perception_status": 4.180468775176315,
+    "/robot_02/safety_status": 7.724434893087587,
+    "/robot_02/serving/status": 7.725517655643761,
+    "/robot_02/camera/front/image": 4.154264411366248
+  },
+  "lifecycle": {
+    "/robot_01/velocity_smoother": "active",
+    "/robot_02/map_server": "active",
+    "/robot_02/amcl": "active",
+    "/robot_02/planner_server": "active",
+    "/robot_02/controller_server": "active",
+    "/robot_02/bt_navigator": "active",
+    "/robot_02/velocity_smoother": "active",
+    "/robot_02/collision_monitor": "active"
+  },
+  "latest": {
+    "/robot_01/cmd_vel_nav": {
+      "v": 0.2499999701976776,
+      "w": 0.01287336926907301
+    },
+    "/robot_01/cmd_vel_nav_smooth": {
+      "v": 0.2499999701976776,
+      "w": 0.01287336926907301
+    },
+    "/robot_01/cmd_vel_semantic": {
+      "v": 0.25,
+      "w": 0.022012116387486458
+    },
+    "/robot_01/cmd_vel": {
+      "v": 0.25,
+      "w": 0.022012116387486458
+    },
+    "/robot_01/perception_status": {
+      "fresh": true,
+      "detector": "YOLO_RGBD",
+      "count": 0,
+      "views": {
+        "front": {
+          "received": 318399.238578472,
+          "detections": [],
+          "error": null
+        },
+        "rear_left": {
+          "received": 318399.260646503,
+          "detections": [],
+          "error": null
+        },
+        "rear_right": {
+          "received": 318399.293005556,
+          "detections": [],
+          "error": null
+        }
+      }
+    },
+    "/robot_01/safety_status": {
+      "robot_id": "robot_01",
+      "sensor_fresh": true,
+      "rotation": {
+        "cumulative_rad": 0.006698485544840788,
+        "continuous_rad": 0.009475358768709044,
+        "direction": 1,
+        "reason": null
+      },
+      "policy_time_s": 57.002,
+      "command_time_s": 57.102000000000004,
+      "command_wall_time": 1792715122.8788054,
+      "output_v": 0.25,
+      "output_w": 0.022012116387486458,
+      "traffic_hold": false,
+      "dynamic_fresh": true,
+      "dynamic_stage": "TRACKING_5M",
+      "dynamic_stop": false,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "zone_speed_ratio": 1.0,
+      "people_motion": {},
+      "person_distance_m": null,
+      "state": "NORMAL",
+      "fine": false
+    },
+    "/robot_01/serving/status": {
+      "robot_id": "robot_01",
+      "mission_phase": "GOING_DIRECT",
+      "goal_uuid": "aafafd659bb04d59bdaaaf86625afd0e",
+      "goal_kind": "navigate_to_pose",
+      "goal_accepted": true,
+      "goal_publish_count": 1,
+      "goal_retry_count": 0,
+      "goal_feedback": {
+        "distance_remaining": 4.199950218200684,
+        "number_of_recoveries": 0
+      },
+      "goal_recovery_reason": null,
+      "goal_execution_verified_idle": false,
+      "confirmation_pose_valid": false,
+      "state": "GOING_DIRECT",
+      "map_valid": true,
+      "request_id": "blockage-ac75cf28c1",
+      "mode": "DELIVER_DIRECT",
+      "table": "table_02",
+      "target": "table_02",
+      "reason": null,
+      "fine": false,
+      "dynamic_hold": false,
+      "dynamic_stage": "TRACKING_5M",
+      "detour_active": false,
+      "pose_error": [
+        3.3928099673166354,
+        -1.618028356970104
+      ],
+      "target_pose": [
+        4.75,
+        3.85,
+        -1.5707963267948966
+      ],
+      "nav_ready": true,
+      "lifecycle": {
+        "amcl": 3,
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3
+      }
+    },
+    "/robot_01/camera/front/image": "/home/user/team_serving_robot_clean_20261022/_local_only/_robot_01_camera_front_image.png",
+    "/robot_02/cmd_vel_semantic": {
+      "v": 0.0,
+      "w": 0.0
+    },
+    "/robot_02/perception_status": {
+      "fresh": true,
+      "detector": "YOLO_RGBD",
+      "count": 0,
+      "views": {
+        "front": {
+          "received": 318399.618531016,
+          "detections": [],
+          "error": null
+        },
+        "rear_left": {
+          "received": 318399.355468851,
+          "detections": [],
+          "error": null
+        },
+        "rear_right": {
+          "received": 318399.403446045,
+          "detections": [],
+          "error": null
+        }
+      }
+    },
+    "/robot_02/safety_status": {
+      "robot_id": "robot_02",
+      "sensor_fresh": true,
+      "rotation": {
+        "cumulative_rad": 5.816642201195051e-13,
+        "continuous_rad": 0.0,
+        "direction": 0,
+        "reason": null
+      },
+      "policy_time_s": 57.002,
+      "command_time_s": 57.102000000000004,
+      "command_wall_time": 1792715122.8784971,
+      "output_v": 0.0,
+      "output_w": 0.0,
+      "traffic_hold": false,
+      "dynamic_fresh": true,
+      "dynamic_stage": "COLLISION_PREDICTED_STOP",
+      "dynamic_stop": true,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "zone_speed_ratio": 1.0,
+      "people_motion": {},
+      "person_distance_m": null,
+      "state": "STOP",
+      "fine": false
+    },
+    "/robot_02/serving/status": {
+      "robot_id": "robot_02",
+      "mission_phase": "IDLE",
+      "goal_uuid": "51b1154aeacb4282aa9fea9638f5548b",
+      "goal_kind": "navigate_to_pose",
+      "goal_accepted": false,
+      "goal_publish_count": 1,
+      "goal_retry_count": 0,
+      "goal_feedback": {},
+      "goal_recovery_reason": null,
+      "goal_execution_verified_idle": true,
+      "confirmation_pose_valid": false,
+      "state": "IDLE",
+      "map_valid": true,
+      "request_id": null,
+      "mode": null,
+      "table": null,
+      "target": null,
+      "reason": null,
+      "fine": false,
+      "dynamic_hold": false,
+      "dynamic_stage": "COLLISION_PREDICTED_STOP",
+      "detour_active": false,
+      "pose_error": null,
+      "target_pose": null,
+      "nav_ready": true,
+      "lifecycle": {
+        "amcl": 3,
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3
+      }
+    },
+    "/robot_02/camera/front/image": "/home/user/team_serving_robot_clean_20261022/_local_only/_robot_02_camera_front_image.png"
+  },
+  "map_poses": {
+    "robot_01": [
+      2.0584665678498926,
+      1.806439823341008,
+      0.051849172116464066
+    ],
+    "robot_02": [
+      5.600000000000244,
+      -1.1832309244845317e-26,
+      3.1415926535892114
+    ]
+  },
+  "base_velocity_publishers": {
+    "robot_01": [
+      {
+        "name": "collision_monitor",
+        "namespace": "/robot_01"
+      }
+    ],
+    "robot_02": [
+      {
+        "name": "collision_monitor",
+        "namespace": "/robot_02"
+      }
+    ]
+  }
+}

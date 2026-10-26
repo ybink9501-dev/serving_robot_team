@@ -1,0 +1,30 @@
+{
+  "started": 1792995142.6529477,
+  "stage": {
+    "robot_01": {
+      "table": "table_03",
+      "request_id": "deadlockstage-robot_01-1792995179",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockstage-robot_01-1792995179",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      }
+    },
+    "robot_02": {
+      "table": "table_04",
+      "request_id": "deadlockstage-robot_02-1792995179",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockstage-robot_02-1792995179",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      }
+    }
+  },
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_151227.csv"
+}

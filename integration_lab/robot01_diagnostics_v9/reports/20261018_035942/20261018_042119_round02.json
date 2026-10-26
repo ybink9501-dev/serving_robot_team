@@ -1,0 +1,67 @@
+{
+  "round": 2,
+  "timestamp_local": "20261018_042119",
+  "suites": {
+    "v6_preflight": {
+      "status": "PASS",
+      "return_code": 0,
+      "log": "/home/user/team_robot_lab/robot01_diagnostics_v9/reports/20261018_035942/20261018_042119_v6_preflight.txt"
+    },
+    "v7_spin": {
+      "status": "PASS",
+      "return_code": 0,
+      "log": "/home/user/team_robot_lab/robot01_diagnostics_v9/reports/20261018_035942/20261018_042119_v7_spin.txt"
+    },
+    "v8_localization_geometry": {
+      "status": "PASS",
+      "return_code": 0,
+      "log": "/home/user/team_robot_lab/robot01_diagnostics_v9/reports/20261018_035942/20261018_042119_v8_localization_geometry.txt"
+    },
+    "v3_waypoint_snapshot": {
+      "status": "PASS",
+      "return_code": 0,
+      "log": "/home/user/team_robot_lab/robot01_diagnostics_v9/reports/20261018_035942/20261018_042119_v3_waypoint_snapshot.txt"
+    }
+  },
+  "fuzz": {
+    "seed": 20262295,
+    "cases": 400,
+    "failures": [],
+    "failure_count": 0
+  },
+  "logs": [
+    {
+      "file": "/tmp/robot01_spin_arrival_v7_20261018_023859.jsonl",
+      "lines": 33,
+      "events": {
+        "STARTED": 1,
+        "STATE_TRANSITION": 5,
+        "NAV_EVENT": 3,
+        "MAP_GOAL_ERROR": 24
+      },
+      "transition_states": {
+        "CANCELED": 2,
+        "GOING_PICKUP": 2,
+        "ERROR": 1
+      }
+    },
+    {
+      "file": "/tmp/robot01_v6_20261018_022139.jsonl",
+      "lines": 26627,
+      "events": {
+        "RECORDER_STARTED": 1,
+        "cmd_vel_semantic": 14924,
+        "serving_status": 931,
+        "odom": 1753,
+        "robot_state": 2,
+        "nav_event": 4,
+        "cmd_vel_nav": 3184,
+        "cmd_vel_smoothed": 3206,
+        "cmd_vel": 2620,
+        "WARNING_EXCESSIVE_ROTATION": 1,
+        "RECORDER_STOPPED": 1
+      },
+      "transition_states": {}
+    }
+  ]
+}

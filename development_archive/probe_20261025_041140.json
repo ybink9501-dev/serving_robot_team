@@ -1,0 +1,129 @@
+{
+  "rates_hz": {
+    "/robot_02/scan": 9.50517855075088,
+    "/robot_02/odom": 44.80880578840918,
+    "/robot_02/cmd_vel_semantic": 18.320932621199272,
+    "/robot_02/perception_status": 9.410682751604742,
+    "/robot_02/safety_status": 18.319543117632968,
+    "/robot_02/serving/status": 18.319527672828215,
+    "/robot_02/camera/front/image": 9.392400556158515
+  },
+  "lifecycle": {
+    "/robot_02/map_server": "active",
+    "/robot_02/amcl": "active",
+    "/robot_02/planner_server": "active",
+    "/robot_02/controller_server": "active",
+    "/robot_02/bt_navigator": "active",
+    "/robot_02/velocity_smoother": "active",
+    "/robot_02/collision_monitor": "active"
+  },
+  "latest": {
+    "/robot_02/cmd_vel_semantic": {
+      "v": 0.0,
+      "w": 0.0
+    },
+    "/robot_02/perception_status": {
+      "fresh": true,
+      "detector": "YOLO_RGBD",
+      "count": 0,
+      "views": {
+        "front": {
+          "received": 467846.97831741,
+          "detections": [],
+          "error": null
+        },
+        "rear_left": {
+          "received": 467846.992664607,
+          "detections": [],
+          "error": null
+        },
+        "rear_right": {
+          "received": 467847.024150991,
+          "detections": [],
+          "error": null
+        }
+      }
+    },
+    "/robot_02/safety_status": {
+      "robot_id": "robot_02",
+      "sensor_fresh": true,
+      "rotation": {
+        "cumulative_rad": 1.716558510387597e-17,
+        "continuous_rad": 0.0,
+        "cumulative_watch": false,
+        "direction": 0,
+        "reason": null
+      },
+      "policy_time_s": 53.80200000000001,
+      "command_time_s": 53.902,
+      "command_wall_time": 1792869100.8764157,
+      "output_v": 0.0,
+      "output_w": 0.0,
+      "traffic_hold": false,
+      "dynamic_fresh": true,
+      "dynamic_stage": "CLEAR",
+      "dynamic_stop": false,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "zone_speed_ratio": 1.0,
+      "people_motion": {},
+      "person_distance_m": null,
+      "state": "STOP",
+      "fine": false
+    },
+    "/robot_02/serving/status": {
+      "robot_id": "robot_02",
+      "process_id": 415594,
+      "accepted_signals": [],
+      "mission_phase": "IDLE",
+      "goal_uuid": "7960d8b8c3f343868a923d20e8f0c7fc",
+      "goal_kind": "navigate_to_pose",
+      "goal_accepted": false,
+      "goal_publish_count": 4,
+      "goal_retry_count": 3,
+      "goal_feedback": {},
+      "goal_recovery_reason": null,
+      "goal_execution_verified_idle": true,
+      "confirmation_pose_valid": false,
+      "state": "IDLE",
+      "map_valid": true,
+      "request_id": null,
+      "mode": null,
+      "table": null,
+      "target": null,
+      "reason": null,
+      "fine": false,
+      "dynamic_hold": false,
+      "dynamic_stage": "CLEAR",
+      "detour_active": false,
+      "pose_error": null,
+      "target_pose": null,
+      "nav_ready": true,
+      "lifecycle": {
+        "amcl": 3,
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3
+      }
+    },
+    "/robot_02/camera/front/image": "/home/user/team_serving_robot_clean_20261022/_local_only/_robot_02_camera_front_image.png"
+  },
+  "map_poses": {
+    "robot_01": "\"robot_01/base_footprint\" passed to lookupTransform argument source_frame does not exist. ",
+    "robot_02": [
+      5.600000000000204,
+      4.83129079032835e-34,
+      3.141592653589793
+    ]
+  },
+  "base_velocity_publishers": {
+    "robot_01": [],
+    "robot_02": [
+      {
+        "name": "collision_monitor",
+        "namespace": "/robot_02"
+      }
+    ]
+  }
+}

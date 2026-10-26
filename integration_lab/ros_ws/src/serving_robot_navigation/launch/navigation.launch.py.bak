@@ -1,0 +1,86 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+from launch_ros.descriptions import ParameterFile
+from launch_ros.parameter_descriptions import ParameterValue
+from nav2_common.launch import RewrittenYaml
+
+
+def generate_launch_description():
+    enabled = LaunchConfiguration("start_navigation")
+    sim_time = LaunchConfiguration("use_sim_time")
+
+    share = get_package_share_directory("serving_robot_navigation")
+    config = os.path.join(share, "config", "nav2.yaml")
+
+    params = ParameterFile(
+        RewrittenYaml(
+            source_file=config,
+            root_key="robot_01",
+            param_rewrites={},
+            convert_types=True,
+        ),
+        allow_substs=True,
+    )
+
+    components = [
+        ("nav2_planner", "planner_server", []),
+        ("nav2_controller", "controller_server",
+         [("cmd_vel", "cmd_vel_nav")]),
+        ("nav2_behaviors", "behavior_server",
+         [("cmd_vel", "cmd_vel_nav")]),
+        ("nav2_bt_navigator", "bt_navigator", []),
+        ("nav2_velocity_smoother", "velocity_smoother",
+         [("cmd_vel", "cmd_vel_nav")]),
+    ]
+
+    actions = [
+        DeclareLaunchArgument(
+            "start_navigation",
+            default_value="false",
+            description="Disabled until safety integration is verified",
+        ),
+        DeclareLaunchArgument(
+            "use_sim_time",
+            default_value="true",
+        ),
+    ]
+
+    names = []
+
+    for package, executable, remappings in components:
+        names.append(executable)
+        actions.append(Node(
+            package=package,
+            executable=executable,
+            name=executable,
+            namespace="robot_01",
+            output="screen",
+            condition=IfCondition(enabled),
+            parameters=[
+                params,
+                {"use_sim_time": ParameterValue(sim_time, value_type=bool)},
+            ],
+            remappings=remappings,
+        ))
+
+    actions.append(Node(
+        package="nav2_lifecycle_manager",
+        executable="lifecycle_manager",
+        name="lifecycle_manager_navigation",
+        namespace="robot_01",
+        output="screen",
+        condition=IfCondition(enabled),
+        parameters=[{
+            "use_sim_time": ParameterValue(sim_time, value_type=bool),
+            "autostart": False,
+            "node_names": names,
+        }],
+    ))
+
+    return LaunchDescription(actions)

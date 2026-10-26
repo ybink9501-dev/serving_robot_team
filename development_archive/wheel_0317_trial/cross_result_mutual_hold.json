@@ -1,0 +1,80 @@
+{
+  "robot_01": {
+    "table": "table_02",
+    "request_id": "mutualhold-robot_01-1792940510",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "mutualhold-robot_01-1792940510",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_01"
+    },
+    "handover": {
+      "target_pose": [
+        4.75,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.0358534733031606,
+        0.15090679463614776
+      ],
+      "wall_time": 1792940619.5601273
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "mutualhold-robot_01-1792940510",
+      "robot": "robot_01"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.0358534733031606,
+      0.15090679463614776
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_000119.csv",
+    "actual_error_cm": 6.5828066260921805,
+    "tf_gt_cm": 6.918832363185315
+  },
+  "robot_02": {
+    "table": "table_01",
+    "request_id": "mutualhold-robot_02-1792940510",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "mutualhold-robot_02-1792940510",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_02"
+    },
+    "handover": {
+      "target_pose": [
+        1.6,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.03580377597488733,
+        0.14463642404864174
+      ],
+      "wall_time": 1792940667.938733
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "mutualhold-robot_02-1792940510",
+      "robot": "robot_02"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.03580377597488733,
+      0.14463642404864174
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_000119.csv",
+    "actual_error_cm": 3.3339674309493974,
+    "tf_gt_cm": 1.4046897376285161
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "status": "PROVISIONAL_NOT_VERIFIED",
+  "world": "/home/user/team_serving_robot/ros_ws/src/serving_robot_gazebo/worlds/cafe.world.sdf",
+  "resolution": 0.05,
+  "size_pixels": [
+    212,
+    172
+  ],
+  "extent": [
+    -5.300000000000001,
+    -4.3,
+    5.300000000000001,
+    4.3
+  ],
+  "occupied_pixels": 5946,
+  "collision_count": 24,
+  "models": [
+    {
+      "name": "cafe_structure",
+      "x": 0.0,
+      "y": 0.0,
+      "yaw": 0.0,
+      "collisions": 5
+    },
+    {
+      "name": "cafe_counter",
+      "x": -2.3,
+      "y": 2.4,
+      "yaw": 0.0,
+      "collisions": 1
+    },
+    {
+      "name": "table_set_01",
+      "x": -1.6,
+      "y": 0.65,
+      "yaw": 0.0,
+      "collisions": 4
+    },
+    {
+      "name": "table_set_02",
+      "x": 1.55,
+      "y": 0.65,
+      "yaw": 0.0,
+      "collisions": 4
+    },
+    {
+      "name": "table_set_03",
+      "x": -1.6,
+      "y": -1.45,
+      "yaw": 0.0,
+      "collisions": 4
+    },
+    {
+      "name": "table_set_04",
+      "x": 1.55,
+      "y": -1.45,
+      "yaw": 0.0,
+      "collisions": 4
+    },
+    {
+      "name": "planter_north_east",
+      "x": 3.25,
+      "y": 2.2,
+      "yaw": 0.0,
+      "collisions": 1
+    },
+    {
+      "name": "planter_south_east",
+      "x": 3.25,
+      "y": -2.2,
+      "yaw": 0.0,
+      "collisions": 1
+    }
+  ],
+  "warnings": [],
+  "skipped": [
+    "ground_plane: excluded dynamic/world object"
+  ],
+  "warning": "SDF approximation only; do NOT auto-load into Nav2 without visual/TF/costmap verification"
+}

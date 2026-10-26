@@ -1,0 +1,28 @@
+# V4 arrival judge + fine approach. TEAM arrival.yaml is NOT modified; the V4 server reads this file.
+arrival:
+  detection_radius_m: 0.005      # confirmed detection threshold: 5 mm
+  final_error_m: 0.001           # confirmed final pose tolerance: 1 mm
+  yaw_tolerance_rad: 0.25        # previously configured yaw tolerance (not re-approved)
+  stopped_linear_mps: 0.01
+  stopped_angular_rps: 0.02
+  final_verify_timeout_s: 120.0  # V4 budget; 3 x 30s + settling
+fine_approach:
+  engage_max_m: 0.25
+  xy_tol_m: 0.0006               # design target 0.6 mm below confirmed 1 mm judge; needs Gazebo validation
+  yaw_tol_rad: 0.03
+  v_max: 0.05
+  v_min: 0.006
+  w_max: 0.45
+  w_min: 0.04
+  lead_s: 0.20
+  timeout_s: 30.0
+  max_attempts: 3
+  settle_s: 1.0
+  cmd_topic: cmd_vel_nav         # velocity_smoother input -> Semantic Safety -> Collision Monitor
+
+# Optional near-goal handoff: requires Nav2 terminal CANCELED acknowledgment.
+# LAB trial only. CANCELED terminal result required before fine movement.
+near_goal_handoff:
+  enabled: true
+  radius_m: 0.06       # trial-only trigger, not a change to 2.5mm/5mm/1mm
+  stalled_for_s: 6.0   # trial-only, no motion during the transfer

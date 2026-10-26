@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""One-shot readiness recovery, no velocity or navigation goals.
+Wait for map, AMCL, and TF; start existing Nav2 lifecycle manager.
+"""
+import sys
+import time
+import rclpy
+from rclpy.node import Node
+from rclpy.executors import SingleThreadedExecutor
+from rclpy.time import Time
+from lifecycle_msgs.srv import GetState, ChangeState
+from lifecycle_msgs.msg import Transition
+from nav2_msgs.srv import SetInitialPose, ManageLifecycleNodes
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from tf2_ros import Buffer, TransformListener
+
+POSE = (-3.2, -2.25, 0.0)  # ORIGINAL serving_robot Gazebo spawn pose, not recalibrated.
+
+class Ready(Node):
+    def __init__(self):
+        super().__init__('robot01_ready_once', namespace='robot_01')
+        self.set_parameters([])
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=False)
+        self._ready_executor = SingleThreadedExecutor()
+        self._ready_executor.add_node(self)
+
+    def spin_until(self, predicate, seconds, label):
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            self._ready_executor.spin_once(timeout_sec=0.15)
+            result = predicate()
+            if result:
+                return result
+        raise RuntimeError('Timed out: ' + label)
+
+    def call(self, name, kind, request, seconds=15):
+        client = self.create_client(kind, name)
+        self.spin_until(lambda: client.service_is_ready(), seconds, 'service ' + name)
+        future = client.call_async(request)
+        self.spin_until(lambda: future.done(), seconds, 'response ' + name)
+        if future.exception():
+            raise RuntimeError(f'{name}: {future.exception()}')
+        return future.result()
+
+    def state(self, name):
+        response = self.call(name + '/get_state', GetState, GetState.Request())
+        return response.current_state.id
+
+    def activate_amcl(self):
+        node = '/robot_01/amcl'
+        self.spin_until(lambda: self.state(node) in (2, 3), 40, 'AMCL configured')
+        if self.state(node) == 2:
+            req = ChangeState.Request()
+            req.transition.id = Transition.TRANSITION_ACTIVATE
+            result = self.call(node + '/change_state', ChangeState, req)
+            if not result.success:
+                raise RuntimeError('AMCL activation rejected')
+        self.spin_until(lambda: self.state(node) == 3, 15, 'AMCL active')
+
+    def run(self):
+        self.get_logger().info('Ready gate: wait for map server and AMCL; do not launch duplicate nodes')
+        self.spin_until(lambda: self.state('/map_server') == 3, 55, 'map server active')
+        self.activate_amcl()
+        # Wait for simulation clock (not wall clock), and odom TF, before initial pose.
+        self.spin_until(lambda: self.get_clock().now().nanoseconds > 0, 20, 'clock')
+        self.spin_until(lambda: self.tf_buffer.can_transform('odom', 'base_footprint', Time()), 35, 'odom -> base_footprint')
+        if not self.tf_buffer.can_transform('map', 'base_footprint', Time()):
+            pose = PoseWithCovarianceStamped()
+            pose.header.frame_id = 'map'
+            # Zero timestamp = latest TF, safe with sim_time time jumps.
+            pose.pose.pose.position.x, pose.pose.pose.position.y = POSE[:2]
+            pose.pose.pose.orientation.w = 1.0
+            pose.pose.covariance[0] = 0.25
+            pose.pose.covariance[7] = 0.25
+            pose.pose.covariance[35] = 0.0685
+            req = SetInitialPose.Request()
+            req.pose = pose
+            self.call('/robot_01/set_initial_pose', SetInitialPose, req)
+            self.get_logger().info('AMCL initial pose sent from original spawn (-3.2,-2.25,0)')
+        self.spin_until(lambda: self.tf_buffer.can_transform('map', 'base_footprint', Time()), 35, 'map -> base_footprint')
+        nav = ('planner_server', 'controller_server', 'behavior_server', 'bt_navigator')
+        def all_active():
+            return all(self.state('/robot_01/' + x) == 3 for x in nav)
+        if not all_active():
+            req = ManageLifecycleNodes.Request()
+            req.command = 0  # STARTUP, uses EXISTING manager
+            resp = self.call('/robot_01/lifecycle_manager_navigation_lab/manage_nodes', ManageLifecycleNodes, req, 65)
+            if not resp.success:
+                raise RuntimeError('Nav2 lifecycle manager refused STARTUP')
+        self.spin_until(all_active, 20, 'Nav2 all active')
+        self.get_logger().info('READY: map + AMCL + TF + 4 Nav2 lifecycle nodes active. No motion commanded.')
+
+
+def main():
+    rclpy.init()
+    node = Ready()
+    try:
+        node.run()
+        return 0
+    except Exception as exc:
+        node.get_logger().error('NOT READY: ' + str(exc))
+        return 1
+    finally:
+        node._ready_executor.remove_node(node)
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    sys.exit(main())

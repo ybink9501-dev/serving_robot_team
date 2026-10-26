@@ -1,0 +1,12 @@
+{
+  "submit": {
+    "ok": true,
+    "action": "SUBMIT",
+    "request_id": "restart-goal-20261023-r02",
+    "state": "FAILED",
+    "new": false,
+    "robot_id": "robot_02"
+  },
+  "error": "Real runtime did not reach required state",
+  "success": false
+}

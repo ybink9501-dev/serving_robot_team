@@ -1,0 +1,21 @@
+# V4 arrival judge + fine approach. TEAM arrival.yaml is NOT modified; the V4 server reads this file.
+arrival:
+  detection_radius_m: 0.010      # WITHIN_5CM event radius (must be >= final_error_m)
+  final_error_m: 0.005           # judge: 5 mm (was 1 mm: below AMCL/odom resolution)
+  yaw_tolerance_rad: 0.05        # about 2.9 deg (was 0.25)
+  stopped_linear_mps: 0.01
+  stopped_angular_rps: 0.02
+  final_verify_timeout_s: 120.0  # must cover max_attempts * timeout_s + settle
+fine_approach:
+  engage_max_m: 0.25
+  xy_tol_m: 0.003                # controller target 3 mm, 2 mm margin to the 5 mm judge
+  yaw_tol_rad: 0.03
+  v_max: 0.05
+  v_min: 0.012
+  w_max: 0.45
+  w_min: 0.04
+  lead_s: 0.20
+  timeout_s: 30.0
+  max_attempts: 3
+  settle_s: 1.0
+  cmd_topic: cmd_vel_nav         # velocity_smoother input -> Semantic Safety -> Collision Monitor

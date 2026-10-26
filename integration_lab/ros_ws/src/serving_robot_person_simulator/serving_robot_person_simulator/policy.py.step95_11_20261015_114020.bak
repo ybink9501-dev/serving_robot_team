@@ -1,0 +1,132 @@
+"""Pure decision logic with no ROS/Gazebo imports. Deterministic per seed."""
+import math
+import random
+from dataclasses import dataclass, field
+
+
+def validate(cfg):
+    if cfg.get('people_max') != 8:
+        raise ValueError('people_max must be 8 (user-defined maximum)')
+    b = cfg['behavior']
+    speed = b['speed']
+    actions = b['action_percent']
+    if set(speed) != {'slow', 'normal', 'fast'}:
+        raise ValueError('speed choices must be slow/normal/fast')
+    if set(actions) != {'continue', 'gradual_stop', 'sudden_stop', 'long_block'}:
+        raise ValueError('unknown action choices')
+    for probs in ([speed[k]['percent'] for k in speed], list(actions.values())):
+        if any(type(p) not in (int, float) or p < 0 for p in probs) or abs(sum(probs)-100)>1e-6:
+            raise ValueError('percentage set must sum to 100')
+    for s in speed.values():
+        if not (0 < s['mps'] <= 1.5):
+            raise ValueError('person speed must be >0 and <=1.5m/s')
+    if not (0 <= b['give_way_percent'] <= 100):
+        raise ValueError('give_way_percent outside 0..100')
+    for k in ('decision_interval_s', 'gradual_stop_duration_s', 'gradual_pause_s',
+              'sudden_pause_s', 'long_block_pause_s'):
+        vals = b[k]
+        if len(vals) != 2 or not (0 < vals[0] <= vals[1]):
+            raise ValueError(f'invalid interval {k}')
+    for k in ('robot_stop_radius_m', 'robot_release_radius_m',
+              'person_stop_radius_m', 'person_release_radius_m'):
+        if cfg[k] <= 0:
+            raise ValueError(f'invalid {k}')
+    if cfg['robot_stop_radius_m'] >= cfg['robot_release_radius_m']:
+        raise ValueError('robot distance hysteresis invalid')
+    if cfg['person_stop_radius_m'] >= cfg['person_release_radius_m']:
+        raise ValueError('person distance hysteresis invalid')
+    if cfg['control_rate_hz'] < 1 or cfg['control_rate_hz'] > 20:
+        raise ValueError('control_rate_hz outside 1..20')
+    for lane in cfg['lanes']:
+        a, z = lane['start'], lane['end']
+        if len(a)!=2 or len(z)!=2 or any(not math.isfinite(v) for v in a+z):
+            raise ValueError('lane coordinates invalid')
+        if math.dist(a,z) < 0.7:
+            raise ValueError('lane too short (<0.7m)')
+    return cfg
+
+
+def choose(rng, weighted):
+    """Weighted draw; weights are percentages, event-based, never frame-based."""
+    p = rng.random()*100
+    acc = 0.0
+    for key, weight in weighted.items():
+        acc += weight
+        if p < acc:
+            return key
+    return list(weighted)[-1]
+
+
+def point_near_polyline(x, y, points, width):
+    if len(points)<2:
+        return False
+    for a,b in zip(points,points[1:]):
+        vx,vy=b[0]-a[0],b[1]-a[1]
+        t=max(0,min(1,((x-a[0])*vx+(y-a[1])*vy)/max(1e-12,vx*vx+vy*vy)))
+        if math.hypot(x-a[0]-t*vx,y-a[1]-t*vy)<=width:
+            return True
+    return False
+
+
+@dataclass
+class Walker:
+    ident: int
+    name: str
+    start: tuple
+    end: tuple
+    target_end: bool = True
+    speed_mps: float = 0.0
+    phase: str = 'moving'
+    paused: bool = False
+    next_decision: float = 0.0
+    until: float = 0.0
+    stop_start: float = 0.0
+    decel_start_speed: float = 0.0
+    yield_selected: bool | None = None
+    proximity_hold: bool = False
+    person_hold: bool = False
+    current_action: str = 'continue'
+    last_position: tuple | None = None
+    published_v: tuple = field(default_factory=lambda: (0.0,0.0))
+
+
+def validate_spawn_positions(starts, robot, existing, robot_margin, person_margin):
+    """Reject the WHOLE spawn batch before a single Gazebo entity is created."""
+    if robot is None or not all(math.isfinite(v) for v in robot):
+        raise ValueError('fresh robot ground truth required for spawn')
+    if any(p is None for p in existing):
+        raise ValueError('existing person pose unknown')
+    for i, (start, end) in enumerate(starts):
+        if math.dist(start,robot) < robot_margin or math.dist(end,robot) < robot_margin:
+            raise ValueError(f'lane {i+1} endpoint too close to robot')
+        if any(math.dist(start,p) < person_margin for p in existing):
+            raise ValueError(f'lane {i+1} starts too close to existing person')
+        if any(math.dist(start,other[0]) < person_margin for other in starts[:i]):
+            raise ValueError('multiple people spawn too close together')
+
+
+def draw_speed(rng, cfg):
+    s=cfg['behavior']['speed']
+    key=choose(rng,{k:v['percent'] for k,v in s.items()})
+    return key, float(s[key]['mps'])
+
+
+def decide_action(rng,cfg,now,x,y):
+    b=cfg['behavior']
+    weights=dict(b['action_percent'])
+    if not point_near_polyline(x,y,cfg['blockage_corridor'],cfg['blockage_corridor_half_width_m']):
+        # Long blockage only where manually configured robot corridor is located.
+        weights['continue'] += weights.pop('long_block')
+    kind=choose(rng,weights)
+    duration=0.0
+    if kind=='gradual_stop':
+        duration=rng.uniform(*b['gradual_stop_duration_s'])
+    elif kind=='sudden_stop':
+        duration=rng.uniform(*b['sudden_pause_s'])
+    elif kind=='long_block':
+        duration=rng.uniform(*b['long_block_pause_s'])
+    return kind,duration
+
+
+def next_time(rng,cfg,now):
+    return now+rng.uniform(*cfg['behavior']['decision_interval_s'])

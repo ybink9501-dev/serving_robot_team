@@ -1,0 +1,44 @@
+<?xml version="1.0"?><sdf version="1.10"><world name="cafe">
+  <gravity>0 0 -9.8</gravity>
+  <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+  <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+  <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+  <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact"/>
+  <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
+  <light name="sun" type="directional"><cast_shadows>false</cast_shadows><pose>0 0 10 0 0 0</pose><diffuse>0.8 0.8 0.8 1</diffuse><specular>0.2 0.2 0.2 1</specular><attenuation><range>1000</range><constant>0.9</constant><linear>0.01</linear><quadratic>0.001</quadratic></attenuation><direction>-0.5 -0.2 -1</direction></light>
+  <model name="cafe_structure"><static>true</static><link name="dummy"><pose>0 0 -2 0 0 0</pose><visual name="marker"><geometry><box><size>0.01 0.01 0.01</size></box></geometry></visual></link></model>
+  <model name="ground_plane"><static>true</static><link name="ground"><pose>0 0 -0.05 0 0 0</pose><collision name="floor"><geometry><box><size>12 10 0.1</size></box></geometry></collision><visual name="floor"><geometry><box><size>12 10 0.1</size></box></geometry><material><ambient>0.9 0.9 0.86 1</ambient></material></visual></link></model>
+<model name="north_wall"><static>true</static><pose>0 4.6 0 0 0 0</pose>
+      <link name="body"><pose>0 0 1.0 0 0 0</pose><collision name="collision"><geometry><box><size>11.6 0.2 2</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>11.6 0.2 2</size></box></geometry><material><ambient>0.75 0.73 0.69 1</ambient></material></visual></link></model>
+<model name="south_wall"><static>true</static><pose>0 -4.6 0 0 0 0</pose>
+      <link name="body"><pose>0 0 1.0 0 0 0</pose><collision name="collision"><geometry><box><size>11.6 0.2 2</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>11.6 0.2 2</size></box></geometry><material><ambient>0.75 0.73 0.69 1</ambient></material></visual></link></model>
+<model name="east_wall"><static>true</static><pose>5.8 0 0 0 0 0</pose>
+      <link name="body"><pose>0 0 1.0 0 0 0</pose><collision name="collision"><geometry><box><size>0.2 9.4 2</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.2 9.4 2</size></box></geometry><material><ambient>0.75 0.73 0.69 1</ambient></material></visual></link></model>
+<model name="west_wall"><static>true</static><pose>-5.8 0 0 0 0 0</pose>
+      <link name="body"><pose>0 0 1.0 0 0 0</pose><collision name="collision"><geometry><box><size>0.2 9.4 2</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.2 9.4 2</size></box></geometry><material><ambient>0.75 0.73 0.69 1</ambient></material></visual></link></model>
+<model name="cafe_counter"><static>true</static><pose>-2.3 2.55 0 0 0 0</pose>
+      <link name="body"><pose>0 0 0.45 0 0 0</pose><collision name="collision"><geometry><box><size>2.3 0.55 0.9</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>2.3 0.55 0.9</size></box></geometry><material><ambient>0.45 0.54 0.62 1</ambient></material></visual></link></model>
+<model name="table_set_01"><static>true</static><pose>-1.6 0.7 0 0 0 0</pose>
+      <link name="body"><pose>0 0 0.37 0 0 0</pose><collision name="collision"><geometry><box><size>0.95 0.55 0.74</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.95 0.55 0.74</size></box></geometry><material><ambient>0.45 0.54 0.62 1</ambient></material></visual></link></model>
+<model name="table_set_02"><static>true</static><pose>1.6 0.7 0 0 0 0</pose>
+      <link name="body"><pose>0 0 0.37 0 0 0</pose><collision name="collision"><geometry><box><size>0.95 0.55 0.74</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.95 0.55 0.74</size></box></geometry><material><ambient>0.45 0.54 0.62 1</ambient></material></visual></link></model>
+<model name="table_set_03"><static>true</static><pose>-1.6 -1.3 0 0 0 0</pose>
+      <link name="body"><pose>0 0 0.37 0 0 0</pose><collision name="collision"><geometry><box><size>0.95 0.55 0.74</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.95 0.55 0.74</size></box></geometry><material><ambient>0.45 0.54 0.62 1</ambient></material></visual></link></model>
+<model name="table_set_04"><static>true</static><pose>1.6 -1.3 0 0 0 0</pose>
+      <link name="body"><pose>0 0 0.37 0 0 0</pose><collision name="collision"><geometry><box><size>0.95 0.55 0.74</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.95 0.55 0.74</size></box></geometry><material><ambient>0.45 0.54 0.62 1</ambient></material></visual></link></model>
+<model name="planter_north_east"><static>true</static><pose>4.5 2.9 0 0 0 0</pose>
+      <link name="body"><pose>0 0 0.275 0 0 0</pose><collision name="collision"><geometry><box><size>0.55 0.55 0.55</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.55 0.55 0.55</size></box></geometry><material><ambient>0.45 0.54 0.62 1</ambient></material></visual></link></model>
+<model name="planter_south_east"><static>true</static><pose>4.4 -3.2 0 0 0 0</pose>
+      <link name="body"><pose>0 0 0.275 0 0 0</pose><collision name="collision"><geometry><box><size>0.55 0.55 0.55</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.55 0.55 0.55</size></box></geometry><material><ambient>0.45 0.54 0.62 1</ambient></material></visual></link></model>
+</world></sdf>

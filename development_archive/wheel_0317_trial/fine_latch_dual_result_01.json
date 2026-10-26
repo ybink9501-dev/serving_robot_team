@@ -1,0 +1,132 @@
+{
+  "started": 1792983905.5838895,
+  "stage": {
+    "robot_01": {
+      "request_id": "headonstage-robot_01-1792983934",
+      "table": "table_03",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonstage-robot_01-1792983934",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "wall_time": 1792983967.1582055,
+        "target_pose": [
+          1.6,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonstage-robot_01-1792983934",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    },
+    "robot_02": {
+      "request_id": "headonstage-robot_02-1792983934",
+      "table": "table_04",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonstage-robot_02-1792983934",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "handover": {
+        "wall_time": 1792983970.1628015,
+        "target_pose": [
+          4.75,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonstage-robot_02-1792983934",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    }
+  },
+  "active": {
+    "robot_02": {
+      "request_id": "headonserve-robot_02-1792983970",
+      "table": "table_03",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonserve-robot_02-1792983970",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "load": {
+        "ok": true,
+        "action": "LOAD",
+        "request_id": "headonserve-robot_02-1792983970",
+        "robot": "robot_02"
+      },
+      "handover": {
+        "wall_time": 1792984176.818402,
+        "target_pose": [
+          1.6,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonserve-robot_02-1792983970",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    },
+    "robot_01": {
+      "request_id": "headonmove-robot_01-1792983995",
+      "table": "table_04",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "headonmove-robot_01-1792983995",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "wall_time": 1792984078.5312495,
+        "target_pose": [
+          4.75,
+          -0.1499999999999999,
+          1.5707963267948966
+        ]
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "headonmove-robot_01-1792983995",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "reason": null
+    }
+  },
+  "trigger_pose": [
+    3.8775292325441217,
+    -0.03852749322500079
+  ],
+  "trigger_time": 1792983995.7625709,
+  "trace": "/home/user/team_serving_robot_clean_20261022/_local_only/wheel_0317_trial/fine_latch_dual_trace_01.jsonl",
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_120508.csv"
+}

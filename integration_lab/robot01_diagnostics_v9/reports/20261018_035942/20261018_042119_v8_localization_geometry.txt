@@ -1,0 +1,12 @@
+
+test_angle_wrap (test_geometry.TestGeometry.test_angle_wrap) ... ok
+test_difference (test_geometry.TestGeometry.test_difference) ... ok
+test_gating (test_geometry.TestGeometry.test_gating) ... ok
+test_map_occupancy (test_geometry.TestGeometry.test_map_occupancy) ... ok
+test_missing_gz (test_geometry.TestGeometry.test_missing_gz) ... ok
+test_pose_parses_gz (test_geometry.TestGeometry.test_pose_parses_gz) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.002s
+
+OK

@@ -1,0 +1,80 @@
+{
+  "started": 1792989995.0462382,
+  "stage": {
+    "robot_01": {
+      "table": "table_01",
+      "request_id": "verticalwait-robot_01-1792990028",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "verticalwait-robot_01-1792990028",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "target_pose": [
+          1.6,
+          3.85,
+          -1.5707963267948966
+        ],
+        "pose_error": [
+          0.033252211496283116,
+          0.15130326203991085
+        ],
+        "wall_time": 1792990167.6019099
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "verticalwait-robot_01-1792990028",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.033252211496283116,
+        0.15130326203991085
+      ],
+      "reason": null,
+      "actual_error_cm": 1.4280570473062988
+    },
+    "robot_02": {
+      "table": "table_03",
+      "request_id": "verticalwait-robot_02-1792990028",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "verticalwait-robot_02-1792990028",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "handover": {
+        "target_pose": [
+          1.6,
+          -0.1499999999999999,
+          1.5707963267948966
+        ],
+        "pose_error": [
+          0.035166940618567594,
+          -0.11963981972955096
+        ],
+        "wall_time": 1792990170.3471007
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "verticalwait-robot_02-1792990028",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.035166940618567594,
+        -0.11963981972955096
+      ],
+      "reason": null,
+      "actual_error_cm": 1.6543116417204593
+    }
+  },
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_134638.csv"
+}

@@ -1,0 +1,30 @@
+{
+  "started": 1792989249.9126859,
+  "error": "Initial map TF mismatch: ('robot_01', [2.560913645201736, 1.5099723415367186], (3.2, 0.4))",
+  "trials": {
+    "robot_01": {
+      "table": "table_01",
+      "request_id": "deadlockfacing-robot_01-1792989284",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockfacing-robot_01-1792989284",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      }
+    },
+    "robot_02": {
+      "table": "table_03",
+      "request_id": "deadlockfacing-robot_02-1792989284",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockfacing-robot_02-1792989284",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      }
+    }
+  }
+}

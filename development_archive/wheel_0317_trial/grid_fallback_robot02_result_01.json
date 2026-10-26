@@ -1,0 +1,40 @@
+{
+  "started": 1792982937.6207132,
+  "request_id": "gridfallback-r02-1792982960",
+  "submit": {
+    "ok": true,
+    "action": "SUBMIT",
+    "request_id": "gridfallback-r02-1792982960",
+    "state": "QUEUED",
+    "new": true,
+    "robot_id": "robot_02"
+  },
+  "load": {
+    "ok": true,
+    "action": "LOAD",
+    "request_id": "gridfallback-r02-1792982960",
+    "robot": "robot_02"
+  },
+  "handover": {
+    "wall_time": 1792983053.4135327,
+    "target_pose": [
+      1.6,
+      -0.1499999999999999,
+      1.5707963267948966
+    ],
+    "pose_error": [
+      0.028765434425262432,
+      0.14073391947984493
+    ]
+  },
+  "complete": {
+    "ok": true,
+    "action": "COMPLETE",
+    "request_id": "gridfallback-r02-1792982960",
+    "robot": "robot_02"
+  },
+  "final_state": "COMPLETED",
+  "reason": null,
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_114901.csv",
+  "actual_error_cm": 4.594051807241031
+}

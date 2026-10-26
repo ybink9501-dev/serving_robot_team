@@ -1,0 +1,36 @@
+{
+  "elapsed_s": 102.93063109199284,
+  "operator_confirmations_simulated": true,
+  "request_ids": {
+    "robot_01": "trial-1042eeed4b19",
+    "robot_02": "trial-92e32772330f"
+  },
+  "results": {
+    "robot_02": {
+      "robot_id": "robot_02",
+      "state": "ERROR",
+      "map_valid": true,
+      "request_id": "trial-92e32772330f",
+      "mode": "DELIVER_DIRECT",
+      "table": "table_04",
+      "target": "table_04",
+      "reason": "Could not reach configured map acceptance in time",
+      "fine": false,
+      "nav_ready": true
+    },
+    "robot_01": {
+      "robot_id": "robot_01",
+      "state": "COMPLETED",
+      "map_valid": true,
+      "request_id": "trial-1042eeed4b19",
+      "mode": "DELIVER_DIRECT",
+      "table": "table_03",
+      "target": "robot_01_HOME",
+      "reason": null,
+      "fine": false,
+      "nav_ready": true
+    }
+  },
+  "success": false,
+  "log": "/home/user/team_serving_robot_clean_20261022/_local_only/serving_trial_20261022_161259.jsonl"
+}

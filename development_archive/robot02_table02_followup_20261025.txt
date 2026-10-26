@@ -1,0 +1,1147 @@
+{
+  "active": {
+    "robot_02": "robot02-table02-isolated-20261025"
+  },
+  "queued": [],
+  "requests": {
+    "signals-a7e26bf252": {
+      "request_id": "signals-a7e26bf252",
+      "table": "table_03",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "signals-446f8c668f": {
+      "request_id": "signals-446f8c668f",
+      "table": "table_04",
+      "robot": "robot_02",
+      "mode": "TABLE_COLLECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "explicit-home-r01-C": {
+      "request_id": "explicit-home-r01-C",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "explicit-home-r02-C": {
+      "request_id": "explicit-home-r02-C",
+      "table": null,
+      "robot": "robot_02",
+      "mode": "GO_HOME",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "detour-D-r01": {
+      "request_id": "detour-D-r01",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "deliver-D-r02": {
+      "request_id": "deliver-D-r02",
+      "table": "table_04",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-5ccc3433c7": {
+      "request_id": "blockage-5ccc3433c7",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "blockage-83b16228ab": {
+      "request_id": "blockage-83b16228ab",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "home-forward-F01": {
+      "request_id": "home-forward-F01",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-4c8d14aecf": {
+      "request_id": "blockage-4c8d14aecf",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-ac75cf28c1": {
+      "request_id": "blockage-ac75cf28c1",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "top"
+    },
+    "blockage-bbe9560ec6": {
+      "request_id": "blockage-bbe9560ec6",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "top"
+    },
+    "restart-goal-20261023-r02": {
+      "request_id": "restart-goal-20261023-r02",
+      "table": "table_01",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-9705722b32": {
+      "request_id": "blockage-9705722b32",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "top"
+    },
+    "restart-goal-64a90a65d6": {
+      "request_id": "restart-goal-64a90a65d6",
+      "table": "table_01",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-3230a9b1af": {
+      "request_id": "blockage-3230a9b1af",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "top"
+    },
+    "restart-goal-e872126b09": {
+      "request_id": "restart-goal-e872126b09",
+      "table": "table_01",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-166b806450": {
+      "request_id": "blockage-166b806450",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "top"
+    },
+    "explicit-kitchen-20261023-01": {
+      "request_id": "explicit-kitchen-20261023-01",
+      "table": null,
+      "robot": "robot_02",
+      "mode": "GO_KITCHEN",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-5465924972": {
+      "request_id": "blockage-5465924972",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-9d782a109e": {
+      "request_id": "blockage-9d782a109e",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-3f48b830ec": {
+      "request_id": "blockage-3f48b830ec",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-ca31316d2a": {
+      "request_id": "blockage-ca31316d2a",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-956718338d": {
+      "request_id": "blockage-956718338d",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "blockage-532de07567": {
+      "request_id": "blockage-532de07567",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "blockage-b8354b7800": {
+      "request_id": "blockage-b8354b7800",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "second-213016": {
+      "request_id": "second-213016",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-9bb3c6f24c": {
+      "request_id": "blockage-9bb3c6f24c",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-43ca391a59": {
+      "request_id": "blockage-43ca391a59",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-48fed2e159": {
+      "request_id": "blockage-48fed2e159",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-92e160810d": {
+      "request_id": "blockage-92e160810d",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "blockage-d256efdf72": {
+      "request_id": "blockage-d256efdf72",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-e399f4b5a7": {
+      "request_id": "blockage-e399f4b5a7",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "blockage-c3e379ebea": {
+      "request_id": "blockage-c3e379ebea",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "blockage-dd22994478": {
+      "request_id": "blockage-dd22994478",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-d5af339c50": {
+      "request_id": "blockage-d5af339c50",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-10bce57b05": {
+      "request_id": "blockage-10bce57b05",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "yield-03863cb55b": {
+      "request_id": "yield-03863cb55b",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "yield-safe-09dead46": {
+      "request_id": "yield-safe-09dead46",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "r01-only-integration-bc7c1700": {
+      "request_id": "r01-only-integration-bc7c1700",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_KITCHEN",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "r01-only-return-45047403": {
+      "request_id": "r01-only-return-45047403",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "personsim-r01-bceb697e9": {
+      "request_id": "personsim-r01-bceb697e9",
+      "table": "table_04",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "baseline-r01-9abbf97904": {
+      "request_id": "baseline-r01-9abbf97904",
+      "table": "table_04",
+      "robot": "robot_01",
+      "mode": "KITCHEN_PICKUP",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "stage1-object-r01-20261024-2018": {
+      "request_id": "stage1-object-r01-20261024-2018",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-74579431d1": {
+      "request_id": "blockage-74579431d1",
+      "table": "table_02",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "stage3-clearance-r01-20261024-2027": {
+      "request_id": "stage3-clearance-r01-20261024-2027",
+      "table": "table_04",
+      "robot": "robot_01",
+      "mode": "KITCHEN_PICKUP",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "stage3-static-r01-20261024-2034": {
+      "request_id": "stage3-static-r01-20261024-2034",
+      "table": "table_04",
+      "robot": "robot_01",
+      "mode": "KITCHEN_PICKUP",
+      "state": "FAILED",
+      "side": "auto"
+    },
+    "stage3-rotation-r01-20261024-2038": {
+      "request_id": "stage3-rotation-r01-20261024-2038",
+      "table": "table_04",
+      "robot": "robot_01",
+      "mode": "KITCHEN_PICKUP",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "stage3-home-r01-20261024-2041": {
+      "request_id": "stage3-home-r01-20261024-2041",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-a1db0c2d16": {
+      "request_id": "blockage-a1db0c2d16",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-5fedec01e3": {
+      "request_id": "blockage-5fedec01e3",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "dedup-home-20261024": {
+      "request_id": "dedup-home-20261024",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-e90e33e2f8": {
+      "request_id": "blockage-e90e33e2f8",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "dedup-home-2-20261024": {
+      "request_id": "dedup-home-2-20261024",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-1ecaeaf374": {
+      "request_id": "blockage-1ecaeaf374",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "dedup-home-3-20261024": {
+      "request_id": "dedup-home-3-20261024",
+      "table": null,
+      "robot": "robot_01",
+      "mode": "GO_HOME",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-6e24a9982e": {
+      "request_id": "blockage-6e24a9982e",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "blockage-04bae7daa8": {
+      "request_id": "blockage-04bae7daa8",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "blockage-429ea7e054": {
+      "request_id": "blockage-429ea7e054",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-95fce7ed67": {
+      "request_id": "blockage-95fce7ed67",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-b2a5db99f9": {
+      "request_id": "blockage-b2a5db99f9",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-a6c121b127": {
+      "request_id": "blockage-a6c121b127",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "robot02-f0e182299d": {
+      "request_id": "robot02-f0e182299d",
+      "table": "table_02",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "robot02-near-a08be576": {
+      "request_id": "robot02-near-a08be576",
+      "table": "table_04",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "blockage-b1ae6cb868": {
+      "request_id": "blockage-b1ae6cb868",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "trial-ceb941f5f2fe": {
+      "request_id": "trial-ceb941f5f2fe",
+      "table": "table_03",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "trial-2ae00c7cc42d": {
+      "request_id": "trial-2ae00c7cc42d",
+      "table": "table_04",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "trial-99fbbf955a92": {
+      "request_id": "trial-99fbbf955a92",
+      "table": "table_01",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "SUCCEEDED",
+      "side": "auto"
+    },
+    "trial-4e6a723ba178": {
+      "request_id": "trial-4e6a723ba178",
+      "table": "table_02",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "trial-2b59deb4e3da": {
+      "request_id": "trial-2b59deb4e3da",
+      "table": "table_04",
+      "robot": "robot_01",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "trial-0bac4b600fe4": {
+      "request_id": "trial-0bac4b600fe4",
+      "table": "table_03",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "CANCELED",
+      "side": "auto"
+    },
+    "robot02-table02-isolated-20261025": {
+      "request_id": "robot02-table02-isolated-20261025",
+      "table": "table_02",
+      "robot": "robot_02",
+      "mode": "DELIVER_DIRECT",
+      "state": "RUNNING",
+      "side": "auto"
+    }
+  },
+  "supervisors": {
+    "robot_01": {
+      "state": "UNKNOWN"
+    },
+    "robot_02": {
+      "robot_id": "robot_02",
+      "process_id": 428367,
+      "accepted_signals": [],
+      "mission_phase": "GOING_DIRECT",
+      "goal_uuid": "998288f21b49443484e64b3ddd134471",
+      "goal_kind": "navigate_to_pose",
+      "goal_accepted": false,
+      "goal_publish_count": 1,
+      "goal_retry_count": 0,
+      "goal_feedback": {
+        "distance_remaining": 2.094212532043457,
+        "number_of_recoveries": 3
+      },
+      "goal_recovery_reason": null,
+      "goal_execution_verified_idle": true,
+      "confirmation_pose_valid": false,
+      "state": "GOING_DIRECT",
+      "map_valid": true,
+      "request_id": "robot02-table02-isolated-20261025",
+      "mode": "DELIVER_DIRECT",
+      "table": "table_02",
+      "target": "table_02",
+      "reason": null,
+      "fine": false,
+      "dynamic_hold": true,
+      "dynamic_stage": "TRACK_UNCERTAIN",
+      "detour_active": false,
+      "pose_error": [
+        1.8126348948039481,
+        -0.7843925240061127
+      ],
+      "target_pose": [
+        4.75,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "nav_ready": true,
+      "lifecycle": {
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3,
+        "amcl": 3
+      }
+    }
+  },
+  "robot_poses": {
+    "robot_02": [
+      6.273853101388306,
+      0.9684109886260127
+    ]
+  },
+  "traffic_hold": {
+    "robot_01": true,
+    "robot_02": false
+  },
+  "last_error": null,
+  "http_port": 8765,
+  "safety": {
+    "robot_02": {
+      "robot_id": "robot_02",
+      "sensor_fresh": true,
+      "rotation": {
+        "cumulative_rad": 0.4963562001795977,
+        "continuous_rad": 0.0,
+        "cumulative_watch": false,
+        "direction": 0,
+        "reason": null
+      },
+      "policy_time_s": 224.90200000000002,
+      "command_time_s": 225.002,
+      "command_wall_time": 1792896034.6857834,
+      "output_v": 0.0,
+      "output_w": 0.0,
+      "traffic_hold": false,
+      "dynamic_fresh": true,
+      "dynamic_stage": "TRACK_UNCERTAIN",
+      "dynamic_stop": false,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "zone_speed_ratio": 1.0,
+      "people_motion": {},
+      "person_distance_m": null,
+      "state": "STOP",
+      "fine": false
+    }
+  },
+  "zone_owner": {},
+  "recovery": null,
+  "dynamic": {
+    "robot_02": {
+      "time_s": 225.002,
+      "stage": "TRACK_UNCERTAIN",
+      "stop": false,
+      "linear_stop": false,
+      "hold_navigation": true,
+      "speed_ratio": 0.6,
+      "nearest_object_m": 0.7587440195329871,
+      "front_person_m": null,
+      "contact_latched": false,
+      "contact_active": false,
+      "contact_since_s": null,
+      "contact_observed_s": 0.0,
+      "detour_attempts": {},
+      "front_clear_m": 1.4952837228775024,
+      "clearance_confirmed": true,
+      "blocker_ids": [],
+      "tracks": [
+        {
+          "id": "object_1",
+          "class": "unclassified_object",
+          "x": 6.696192596085069,
+          "y": 4.039452521830936,
+          "vx": -5.908872491775085e-219,
+          "vy": -8.638401358016436e-221,
+          "speed_mps": 5.909503898116872e-219,
+          "heading_rad": -3.1269743215277512,
+          "radius_m": 0.2553365400048241,
+          "first_seen_s": 72.462,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": true,
+          "stopped_since_s": 80.47200000000001,
+          "stationary_for_s": 144.53,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 2.8446097091179507,
+          "blocks_path": false,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 3.099946249122775,
+          "stage": "RESPONSE_3M"
+        },
+        {
+          "id": "object_3",
+          "class": "unclassified_object",
+          "x": 2.5075416160202373,
+          "y": 2.5860748343824325,
+          "vx": -3.261010647866309e-219,
+          "vy": -6.667534389155483e-219,
+          "speed_mps": 7.42227763399271e-219,
+          "heading_rad": -2.02567624066624,
+          "radius_m": 0.31917216604962184,
+          "first_seen_s": 75.47200000000001,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": true,
+          "stopped_since_s": 80.47200000000001,
+          "stationary_for_s": 144.53,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 3.7798446090664397,
+          "blocks_path": false,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 4.099016775116062,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_4",
+          "class": "unclassified_object",
+          "x": 7.649978947338584,
+          "y": 4.576209750791752,
+          "vx": -0.017113407639785798,
+          "vy": 0.05897530863125679,
+          "speed_mps": 0.061408108171457865,
+          "heading_rad": 1.8532190355243143,
+          "radius_m": 0.4176769603663649,
+          "first_seen_s": 75.67200000000001,
+          "last_seen_s": 78.662,
+          "moving": true,
+          "motion_state": "MOVING",
+          "ever_moved": true,
+          "stopped_since_s": null,
+          "stationary_for_s": 0.0,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": true,
+          "distance_m": 3.443661441299178,
+          "blocks_path": false,
+          "in_front": false,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 3.861338401665543,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_5",
+          "class": "unclassified_object",
+          "x": 5.587030173607094,
+          "y": 2.359758974111812,
+          "vx": -4.0852504800838266e-219,
+          "vy": -2.1841346950707115e-219,
+          "speed_mps": 4.632463259566854e-219,
+          "heading_rad": -2.650619267734453,
+          "radius_m": 0.2998199948591593,
+          "first_seen_s": 75.67200000000001,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": true,
+          "stopped_since_s": 80.47200000000001,
+          "stationary_for_s": 144.53,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 1.2518162224422245,
+          "blocks_path": false,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 1.5516362173013838,
+          "stage": "RESPONSE_3M"
+        },
+        {
+          "id": "object_6",
+          "class": "unclassified_object",
+          "x": 5.572602558110965,
+          "y": 2.7188886580666054,
+          "vx": -0.1761168820324926,
+          "vy": 0.0740996030742149,
+          "speed_mps": 0.19107042500764768,
+          "heading_rad": 2.7433348926584586,
+          "radius_m": 0.9031296815953348,
+          "first_seen_s": 75.67200000000001,
+          "last_seen_s": 77.67200000000001,
+          "moving": true,
+          "motion_state": "MOVING",
+          "ever_moved": true,
+          "stopped_since_s": null,
+          "stationary_for_s": 0.0,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": true,
+          "distance_m": 0.9825862025338027,
+          "blocks_path": true,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 1.8857158841291375,
+          "stage": "TRACK_UNCERTAIN"
+        },
+        {
+          "id": "object_9",
+          "class": "unclassified_object",
+          "x": 5.784174086612131,
+          "y": 4.835091808845576,
+          "vx": -1.52347488469662e-219,
+          "vy": -1.720268627102981e-219,
+          "speed_mps": 2.2978903093263947e-219,
+          "heading_rad": -2.295600048078074,
+          "radius_m": 0.568346798349698,
+          "first_seen_s": 76.262,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": true,
+          "stopped_since_s": 80.47200000000001,
+          "stationary_for_s": 144.53,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 3.329217325942037,
+          "blocks_path": false,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 3.8975641242917347,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_12",
+          "class": "unclassified_object",
+          "x": 6.899105198660153,
+          "y": 5.643129319357423,
+          "vx": 0.0,
+          "vy": 0.0,
+          "speed_mps": 0.0,
+          "heading_rad": 0.0,
+          "radius_m": 0.835395567756896,
+          "first_seen_s": 78.08200000000001,
+          "last_seen_s": 78.08200000000001,
+          "moving": false,
+          "motion_state": "UNKNOWN",
+          "ever_moved": false,
+          "stopped_since_s": null,
+          "stationary_for_s": 0.0,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": true,
+          "distance_m": 3.8809517113160847,
+          "blocks_path": false,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 4.716347279072981,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_13",
+          "class": "unclassified_object",
+          "x": 4.254837186910996,
+          "y": 2.4192995326696454,
+          "vx": -1.622251479235173e-219,
+          "vy": -4.742835869627795e-220,
+          "speed_mps": 1.6901611706411277e-219,
+          "heading_rad": -2.8571584697003747,
+          "radius_m": 0.24679658573373017,
+          "first_seen_s": 78.47200000000001,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": true,
+          "stopped_since_s": 80.072,
+          "stationary_for_s": 144.93,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 2.239466238295479,
+          "blocks_path": false,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 2.4862628240292093,
+          "stage": "RESPONSE_3M"
+        },
+        {
+          "id": "object_14",
+          "class": "unclassified_object",
+          "x": 5.621227462550587,
+          "y": 0.35938553332278383,
+          "vx": -3.776964050583153e-221,
+          "vy": -6.4690405197559735e-220,
+          "speed_mps": 6.480057084674379e-220,
+          "heading_rad": -1.6291153481909637,
+          "radius_m": 0.13391057754006047,
+          "first_seen_s": 78.47200000000001,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": true,
+          "stopped_since_s": 79.872,
+          "stationary_for_s": 145.13,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 0.7587440195329871,
+          "blocks_path": false,
+          "in_front": false,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 0.8926545970730476,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_15",
+          "class": "unclassified_object",
+          "x": 5.654014093063659,
+          "y": -1.0495213921111874,
+          "vx": 7.47132909226463e-220,
+          "vy": -8.500444173734413e-220,
+          "speed_mps": 1.1317168795935454e-219,
+          "heading_rad": -0.849742580476016,
+          "radius_m": 0.4465036516926943,
+          "first_seen_s": 78.47200000000001,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": false,
+          "stopped_since_s": 79.872,
+          "stationary_for_s": 145.13,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 1.664479884355985,
+          "blocks_path": false,
+          "in_front": false,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 2.1109835360486793,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_16",
+          "class": "unclassified_object",
+          "x": 6.9610088638407435,
+          "y": -1.0414503406515045,
+          "vx": 7.253511414036401e-220,
+          "vy": 9.114778558643507e-220,
+          "speed_mps": 1.1648717354570148e-219,
+          "heading_rad": 0.8986235845675645,
+          "radius_m": 0.10472840196433149,
+          "first_seen_s": 78.47200000000001,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": false,
+          "stopped_since_s": 79.47200000000001,
+          "stationary_for_s": 145.53,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 2.0193538951222902,
+          "blocks_path": false,
+          "in_front": false,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 2.1240822970866216,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_17",
+          "class": "unclassified_object",
+          "x": 3.6379141754022144,
+          "y": 5.171571174454189,
+          "vx": 0.0,
+          "vy": 0.0,
+          "speed_mps": 0.0,
+          "heading_rad": 0.0,
+          "radius_m": 0.08,
+          "first_seen_s": 78.662,
+          "last_seen_s": 78.662,
+          "moving": false,
+          "motion_state": "UNKNOWN",
+          "ever_moved": false,
+          "stopped_since_s": null,
+          "stationary_for_s": 0.0,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": true,
+          "distance_m": 4.881323368745466,
+          "blocks_path": false,
+          "in_front": true,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 4.961323368745466,
+          "stage": "TRACKING_5M"
+        },
+        {
+          "id": "object_18",
+          "class": "unclassified_object",
+          "x": 6.175232524351173,
+          "y": -0.24823811673629617,
+          "vx": -4.67386525204391e-220,
+          "vy": 2.157269489072528e-220,
+          "speed_mps": 5.1477012386837994e-220,
+          "heading_rad": 2.709167079147032,
+          "radius_m": 0.08,
+          "first_seen_s": 79.06200000000001,
+          "last_seen_s": 224.872,
+          "moving": false,
+          "motion_state": "STATIONARY",
+          "ever_moved": false,
+          "stopped_since_s": 79.47200000000001,
+          "stationary_for_s": 145.53,
+          "blocked_since_s": null,
+          "sources": [
+            "LiDAR_FOREGROUND"
+          ],
+          "uncertain": false,
+          "distance_m": 1.1406396125777842,
+          "blocks_path": false,
+          "in_front": false,
+          "rotation_risk": false,
+          "ttc_s": 0.0,
+          "closest_approach_m": 1.2206396125777843,
+          "stage": "TRACKING_5M"
+        }
+      ],
+      "events": [],
+      "robot_id": "robot_02",
+      "sensor_fresh": true,
+      "camera_fresh": true,
+      "lidar_fresh": true,
+      "contact_fresh": true,
+      "static_registration": {
+        "accepted": true,
+        "yaw_rad": 0.030220331634734584,
+        "shift_m": 0.05501951946328342,
+        "median_surface_error_m": 0.044066767809336715,
+        "rotation": [
+          [
+            0.9995434005293542,
+            -0.030215731965567476
+          ],
+          [
+            0.03021573196556747,
+            0.9995434005293543
+          ]
+        ],
+        "translation": [
+          -0.06173347653288257,
+          -0.1345849230652708
+        ]
+      },
+      "robot_pose": [
+        6.273853101388306,
+        0.9684109886260126,
+        2.3551888508010093
+      ],
+      "active_mission": true,
+      "wall_time": 1792896034.6889315
+    }
+  },
+  "dynamic_events": {},
+  "navigation_events": {
+    "robot_02": {
+      "robot_id": "robot_02",
+      "event": "DYNAMIC_NAV_PAUSED",
+      "request_id": "robot02-table02-isolated-20261025",
+      "process_id": 428367,
+      "accepted_signals": [],
+      "mission_phase": "GOING_DIRECT",
+      "goal_uuid": "998288f21b49443484e64b3ddd134471",
+      "goal_kind": "navigate_to_pose",
+      "goal_accepted": false,
+      "goal_publish_count": 1,
+      "goal_retry_count": 0,
+      "goal_feedback": {
+        "distance_remaining": 2.094212532043457,
+        "number_of_recoveries": 3
+      },
+      "goal_recovery_reason": null,
+      "goal_execution_verified_idle": true,
+      "time_s": 160.822,
+      "wall_time": 1792895959.251323
+    }
+  }
+}

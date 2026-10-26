@@ -1,0 +1,24 @@
+test_map_dimensions (test_assets.Assets.test_map_dimensions) ... ok
+test_model_uniqueness (test_assets.Assets.test_model_uniqueness) ... ok
+test_precision_constants_preserved (test_assets.Assets.test_precision_constants_preserved) ... ok
+test_waypoint_consistency (test_assets.Assets.test_waypoint_consistency) ... ok
+test_world_no_robot_autospawn (test_assets.Assets.test_world_no_robot_autospawn) ... ok
+test_kitchen_gate (test_policy.Policies.test_kitchen_gate) ... ok
+test_limits (test_policy.Policies.test_limits) ... ok
+test_modes (test_policy.Policies.test_modes) ... ok
+test_queue_and_duplicate (test_policy.Policies.test_queue_and_duplicate) ... ok
+test_table_common (test_policy.Policies.test_table_common) ... ok
+test_wrong_previous_request_cannot_complete_new_task (test_policy.Policies.test_wrong_previous_request_cannot_complete_new_task) ... ok
+test_contact_sensors_present_on_each_robot (test_sim_contract.Contracts.test_contact_sensors_present_on_each_robot) ... ok
+test_metrics_and_acceptance_present (test_sim_contract.Contracts.test_metrics_and_acceptance_present) ... ok
+test_physical_scenario_entities_have_collisions (test_sim_contract.Contracts.test_physical_scenario_entities_have_collisions) ... ok
+test_sim_truth_not_used_as_detector (test_sim_contract.Contracts.test_sim_truth_not_used_as_detector) ... ok
+test_zone_owner_keeps_inside_precedence (test_sim_contract.Contracts.test_zone_owner_keeps_inside_precedence) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.004s
+
+OK
+Source files: 49
+Offline structural checks: PASS
+ROS/Gazebo runtime: NOT RUN HERE

@@ -1,0 +1,91 @@
+{
+  "started": 1792948881.100087,
+  "placed_at": 1792948915.025308,
+  "placed_poses": {
+    "robot_01": [
+      2.1306175301476804,
+      3.8500041847130646
+    ],
+    "robot_02": [
+      3.07,
+      3.85
+    ]
+  },
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_022124.csv",
+  "trials": {
+    "robot_01": {
+      "table": "table_02",
+      "request_id": "deadlockfacing-robot_01-1792948913",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockfacing-robot_01-1792948913",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "target_pose": [
+          4.75,
+          3.85,
+          -1.5707963267948966
+        ],
+        "pose_error": [
+          0.036957311871780106,
+          -0.1432294505565952
+        ],
+        "wall_time": 1792948980.9094899
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockfacing-robot_01-1792948913",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.036957311871780106,
+        -0.1432294505565952
+      ],
+      "reason": null,
+      "actual_error_cm": 4.714910461904253
+    },
+    "robot_02": {
+      "table": "table_01",
+      "request_id": "deadlockfacing-robot_02-1792948913",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockfacing-robot_02-1792948913",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "handover": {
+        "target_pose": [
+          1.6,
+          3.85,
+          -1.5707963267948966
+        ],
+        "pose_error": [
+          0.03589497118008507,
+          -0.14567636999723144
+        ],
+        "wall_time": 1792949057.2001884
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockfacing-robot_02-1792948913",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.03589497118008507,
+        -0.14567636999723144
+      ],
+      "reason": null,
+      "actual_error_cm": 2.2487691479232756
+    }
+  }
+}

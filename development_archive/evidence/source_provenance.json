@@ -1,0 +1,12 @@
+{
+  "baseline_commit": "6d87bda84ffb7d0a2cb73de402c0b29b5c6e0d2a",
+  "reuse": "/home/user/cafe_autonomy_TEAM_RUNTIMEFIX_20261022/ros_ws/src/cafe_autonomy",
+  "lab_mppi": "/home/user/team_robot_lab/precision_v4/nav2_lab_v4.yaml",
+  "raw_map_candidate": "/home/user/team_robot_lab/lab_maps/cafe_clean_step96.yaml",
+  "raw_map_alignment": "UNKNOWN; do not assume world coordinates",
+  "excluded": [
+    "replacement cafe.sdf",
+    "synthetic cafe.pgm",
+    "replacement robot models"
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "rates_hz": {
+    "/robot_01/scan": 4.153516746753452,
+    "/robot_01/odom": 18.756129005940505,
+    "/robot_01/cmd_vel_semantic": 7.805919835827257,
+    "/robot_01/perception_status": 4.20887882341975,
+    "/robot_01/safety_status": 7.806075397315673,
+    "/robot_01/serving/status": 7.791782198007678,
+    "/robot_01/camera/front/image": 1.8669956335413793,
+    "/robot_02/scan": 4.1666112084270095,
+    "/robot_02/odom": 18.773968906837283,
+    "/robot_02/cmd_vel_nav": 19.67224134436389,
+    "/robot_02/cmd_vel_nav_smooth": 20.45392294200715,
+    "/robot_02/cmd_vel_semantic": 7.810212483641352,
+    "/robot_02/cmd_vel": 7.665405282586584,
+    "/robot_02/perception_status": 4.206105552076119,
+    "/robot_02/safety_status": 7.810576776387205,
+    "/robot_02/serving/status": 7.796149365612573,
+    "/robot_02/camera/front/image": 2.0215654147130775,
+    "/robot_01/cmd_vel_nav": 19.98650774643093,
+    "/robot_01/cmd_vel_nav_smooth": 19.999943285475055,
+    "/robot_01/cmd_vel": 7.309540721397956
+  },
+  "lifecycle": {
+    "/robot_01/velocity_smoother": "active",
+    "/robot_01/collision_monitor": "active",
+    "/robot_02/map_server": "active",
+    "/robot_02/amcl": "active",
+    "/robot_02/planner_server": "active",
+    "/robot_02/controller_server": "active",
+    "/robot_02/bt_navigator": "active",
+    "/robot_02/velocity_smoother": "active",
+    "/robot_02/collision_monitor": "active"
+  },
+  "latest": {
+    "/robot_01/cmd_vel_semantic": {
+      "v": 0.24871531128883362,
+      "w": -0.2648891806602478
+    },
+    "/robot_01/perception_status": {
+      "fresh": true,
+      "detector": "YOLO_RGBD",
+      "count": 0,
+      "views": {
+        "front": {
+          "received": 258416.600229419,
+          "detections": [],
+          "error": null
+        },
+        "rear_left": {
+          "received": 258416.644542182,
+          "detections": [],
+          "error": null
+        },
+        "rear_right": {
+          "received": 258416.674126091,
+          "detections": [],
+          "error": null
+        }
+      }
+    },
+    "/robot_01/safety_status": {
+      "robot_id": "robot_01",
+      "sensor_fresh": true,
+      "traffic_hold": false,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "person_distance_m": null,
+      "state": "NORMAL",
+      "fine": false
+    },
+    "/robot_01/serving/status": {
+      "robot_id": "robot_01",
+      "state": "GOING_PICKUP",
+      "map_valid": true,
+      "request_id": "trial-025cd125973a",
+      "mode": "KITCHEN_PICKUP",
+      "table": "table_03",
+      "target": "kitchen",
+      "reason": null,
+      "fine": false,
+      "pose_error": [
+        0.8339160729167797,
+        1.0323761134186742
+      ],
+      "target_pose": [
+        0.9000000000000004,
+        3.7,
+        1.5707963267948966
+      ],
+      "nav_ready": true,
+      "lifecycle": {
+        "amcl": 3,
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3
+      }
+    },
+    "/robot_01/camera/front/image": "/home/user/team_serving_robot_clean_20261022/_local_only/_robot_01_camera_front_image.png",
+    "/robot_02/cmd_vel_nav": {
+      "v": 0.08507956564426422,
+      "w": -0.11911503225564957
+    },
+    "/robot_02/cmd_vel_nav_smooth": {
+      "v": 0.08507956564426422,
+      "w": -0.11911503225564957
+    },
+    "/robot_02/cmd_vel_semantic": {
+      "v": 0.08749514818191528,
+      "w": -0.1183452382683754
+    },
+    "/robot_02/cmd_vel": {
+      "v": 0.08749514818191528,
+      "w": -0.1183452382683754
+    },
+    "/robot_02/perception_status": {
+      "fresh": true,
+      "detector": "YOLO_RGBD",
+      "count": 1,
+      "views": {
+        "front": {
+          "received": 258416.944225124,
+          "detections": [],
+          "error": null
+        },
+        "rear_left": {
+          "received": 258416.500386083,
+          "detections": [],
+          "error": null
+        },
+        "rear_right": {
+          "received": 258416.038749128,
+          "detections": [
+            [
+              0.275297582426127,
+              4.435118055586032,
+              1.5093374878648942
+            ]
+          ],
+          "error": null
+        }
+      }
+    },
+    "/robot_02/safety_status": {
+      "robot_id": "robot_02",
+      "sensor_fresh": true,
+      "traffic_hold": false,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "person_distance_m": 7.107237829033795,
+      "state": "NORMAL",
+      "fine": false
+    },
+    "/robot_02/serving/status": {
+      "robot_id": "robot_02",
+      "state": "RETURNING_HOME",
+      "map_valid": true,
+      "request_id": "trial-f2bb6db90304",
+      "mode": "KITCHEN_PICKUP",
+      "table": "table_04",
+      "target": "robot_02_HOME",
+      "reason": null,
+      "fine": false,
+      "pose_error": [
+        0.1666740318489923,
+        -0.5356470184433857
+      ],
+      "target_pose": [
+        5.6,
+        0.0,
+        3.141592653589793
+      ],
+      "nav_ready": true,
+      "lifecycle": {
+        "amcl": 3,
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3
+      }
+    },
+    "/robot_02/camera/front/image": "/home/user/team_serving_robot_clean_20261022/_local_only/_robot_02_camera_front_image.png",
+    "/robot_01/cmd_vel_nav": {
+      "v": 0.24914902448654175,
+      "w": -0.25260844826698303
+    },
+    "/robot_01/cmd_vel_nav_smooth": {
+      "v": 0.24914902448654175,
+      "w": -0.25260844826698303
+    },
+    "/robot_01/cmd_vel": {
+      "v": 0.24871531128883362,
+      "w": -0.2648891806602478
+    }
+  },
+  "map_poses": {
+    "robot_01": [
+      0.11477438863930475,
+      3.4466403623996924,
+      0.5284812474429716
+    ],
+    "robot_02": [
+      5.715241741888481,
+      -0.11920888699953003,
+      -2.6106482068084507
+    ]
+  },
+  "base_velocity_publishers": {
+    "robot_01": [
+      {
+        "name": "collision_monitor",
+        "namespace": "/robot_01"
+      }
+    ],
+    "robot_02": [
+      {
+        "name": "collision_monitor",
+        "namespace": "/robot_02"
+      }
+    ]
+  }
+}

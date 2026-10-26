@@ -1,0 +1,182 @@
+[
+  {
+    "round": 1,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 2,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 3,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 4,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 5,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 6,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 7,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 8,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 9,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 10,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 11,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 12,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 13,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 14,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 15,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 16,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 17,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  },
+  {
+    "round": 18,
+    "suites": {
+      "v6_preflight": "PASS",
+      "v7_spin": "PASS",
+      "v8_localization_geometry": "PASS",
+      "v3_waypoint_snapshot": "PASS"
+    },
+    "fuzz_failures": 0
+  }
+]

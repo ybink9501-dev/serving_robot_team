@@ -1,0 +1,189 @@
+{
+  "rates_hz": {
+    "/robot_01/scan": 4.563580816477203,
+    "/robot_01/odom": 20.475579185377597,
+    "/robot_01/cmd_vel_semantic": 8.539934364197352,
+    "/robot_01/perception_status": 4.269492176007727,
+    "/robot_01/safety_status": 8.538981656314174,
+    "/robot_01/serving/status": 8.53390566699978,
+    "/robot_01/camera/front/image": 2.206992873948909,
+    "/robot_02/scan": 4.590777630000362,
+    "/robot_02/odom": 20.48744015243954,
+    "/robot_02/cmd_vel_semantic": 8.543317565353746,
+    "/robot_02/perception_status": 4.521411094762535,
+    "/robot_02/safety_status": 8.543472980647277,
+    "/robot_02/serving/status": 8.540599697525268,
+    "/robot_02/camera/front/image": 2.377006691331624
+  },
+  "lifecycle": {
+    "/robot_01/velocity_smoother": "active",
+    "/robot_02/controller_server": "active",
+    "/robot_02/bt_navigator": "active",
+    "/robot_02/velocity_smoother": "active",
+    "/robot_02/collision_monitor": "active"
+  },
+  "latest": {
+    "/robot_01/cmd_vel_semantic": {
+      "v": 0.0,
+      "w": 0.0
+    },
+    "/robot_01/perception_status": {
+      "fresh": true,
+      "detector": "YOLO_RGBD",
+      "count": 0,
+      "views": {
+        "front": {
+          "received": 258613.223667465,
+          "detections": [],
+          "error": null
+        },
+        "rear_left": {
+          "received": 258613.253884394,
+          "detections": [],
+          "error": null
+        },
+        "rear_right": {
+          "received": 258613.284220453,
+          "detections": [],
+          "error": null
+        }
+      }
+    },
+    "/robot_01/safety_status": {
+      "robot_id": "robot_01",
+      "sensor_fresh": true,
+      "traffic_hold": false,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "person_distance_m": null,
+      "state": "STOP",
+      "fine": false
+    },
+    "/robot_01/serving/status": {
+      "robot_id": "robot_01",
+      "state": "COMPLETED",
+      "map_valid": true,
+      "request_id": "trial-025cd125973a",
+      "mode": "KITCHEN_PICKUP",
+      "table": "table_03",
+      "target": "robot_01_HOME",
+      "reason": null,
+      "fine": false,
+      "pose_error": [
+        0.08538590899376873,
+        0.160693186901683
+      ],
+      "target_pose": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "nav_ready": true,
+      "lifecycle": {
+        "amcl": 3,
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3
+      }
+    },
+    "/robot_01/camera/front/image": "/home/user/team_serving_robot_clean_20261022/_local_only/_robot_01_camera_front_image.png",
+    "/robot_02/cmd_vel_semantic": {
+      "v": 0.0,
+      "w": 0.0
+    },
+    "/robot_02/perception_status": {
+      "fresh": true,
+      "detector": "YOLO_RGBD",
+      "count": 1,
+      "views": {
+        "front": {
+          "received": 258613.09755149,
+          "detections": [
+            [
+              4.541475068584517,
+              0.09040532286814845,
+              0.9989431596556626
+            ]
+          ],
+          "error": null
+        },
+        "rear_left": {
+          "received": 258612.267284429,
+          "detections": [],
+          "error": null
+        },
+        "rear_right": {
+          "received": 258613.188806801,
+          "detections": [],
+          "error": null
+        }
+      }
+    },
+    "/robot_02/safety_status": {
+      "robot_id": "robot_02",
+      "sensor_fresh": true,
+      "traffic_hold": false,
+      "detector_fresh": true,
+      "fleet_fresh": true,
+      "person_distance_m": 1.1047964472909402,
+      "state": "STOP",
+      "fine": false
+    },
+    "/robot_02/serving/status": {
+      "robot_id": "robot_02",
+      "state": "COMPLETED",
+      "map_valid": true,
+      "request_id": "trial-f2bb6db90304",
+      "mode": "KITCHEN_PICKUP",
+      "table": "table_04",
+      "target": "robot_02_HOME",
+      "reason": null,
+      "fine": false,
+      "pose_error": [
+        0.08789474705328619,
+        0.22302995364555978
+      ],
+      "target_pose": [
+        5.6,
+        0.0,
+        3.141592653589793
+      ],
+      "nav_ready": true,
+      "lifecycle": {
+        "amcl": 3,
+        "map_server": 3,
+        "controller_server": 3,
+        "bt_navigator": 3,
+        "collision_monitor": 3
+      }
+    },
+    "/robot_02/camera/front/image": "/home/user/team_serving_robot_clean_20261022/_local_only/_robot_02_camera_front_image.png"
+  },
+  "map_poses": {
+    "robot_01": [
+      -0.00603208619564044,
+      0.08517257417044832,
+      -0.160693186901683
+    ],
+    "robot_02": [
+      5.632808826908132,
+      -0.08154181403717586,
+      2.9185626999442333
+    ]
+  },
+  "base_velocity_publishers": {
+    "robot_01": [
+      {
+        "name": "collision_monitor",
+        "namespace": "/robot_01"
+      }
+    ],
+    "robot_02": [
+      {
+        "name": "collision_monitor",
+        "namespace": "/robot_02"
+      }
+    ]
+  }
+}

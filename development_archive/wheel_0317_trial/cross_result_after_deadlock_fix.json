@@ -1,0 +1,80 @@
+{
+  "robot_01": {
+    "table": "table_02",
+    "request_id": "afterdeadlock-robot_01-1792966631",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "afterdeadlock-robot_01-1792966631",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_01"
+    },
+    "handover": {
+      "target_pose": [
+        4.75,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.03320070612540708,
+        0.14732979765555987
+      ],
+      "wall_time": 1792966741.8400905
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "afterdeadlock-robot_01-1792966631",
+      "robot": "robot_01"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.03320070612540708,
+      0.14732979765555987
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_071643.csv",
+    "actual_error_cm": 8.395767415542409,
+    "tf_gt_cm": 8.808397678419123
+  },
+  "robot_02": {
+    "table": "table_01",
+    "request_id": "afterdeadlock-robot_02-1792966631",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "afterdeadlock-robot_02-1792966631",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_02"
+    },
+    "handover": {
+      "target_pose": [
+        1.6,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.03604249871352166,
+        0.15243653446560423
+      ],
+      "wall_time": 1792966787.5335708
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "afterdeadlock-robot_02-1792966631",
+      "robot": "robot_02"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.03604249871352166,
+      0.15243653446560423
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_071643.csv",
+    "actual_error_cm": 2.0257834627766202,
+    "tf_gt_cm": 3.275826208807761
+  }
+}

@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Stage 4 - evidence summary. Never calls ROS; avoid false positive when events missing."""
+import argparse,json,math
+from pathlib import Path
+from collections import Counter
+
+
+def report(files):
+    state_changes=[];nav_events=[];guards=[];pose_end=None;counts=Counter();channels=Counter()
+    last_state=None;last_goal=None;seen_order=[];velmax={}
+    for p in files:
+        if not p.exists():raise FileNotFoundError(str(p))
+        for line in p.read_text(encoding='utf8').splitlines():
+            try:r=json.loads(line)
+            except (ValueError,TypeError):continue
+            ch=r.get('channel',r.get('event','UNKNOWN'))
+            d=r.get('data',r)
+            channels[ch]+=1
+            if ch in ('serving_status','STATE_TRANSITION'):
+                s=d.get('state')
+                reason=d.get('reason')
+                if s and (s,reason)!=last_state:
+                    state_changes.append({'state':s,'reason':reason,'dest':d.get('destination_id')})
+                    last_state=(s,reason)
+                    if s not in seen_order:seen_order.append(s)
+            if ch in ('nav_event','NAV_EVENT'):
+                ev=d.get('event', d.get('payload',{}).get('event'))
+                if ev:nav_events.append(ev)
+            if ch in ('STALL_DETECTED','EXCESSIVE_SPIN','CANCEL_PUBLISHED'):
+                guards.append({'event':ch,'cause':d.get('cause'),'reason':d.get('reason')})
+            if ch=='MAP_GOAL_ERROR':
+                pose_end={'distance_m':d.get('map_xy_error_m'),'yaw_deg':d.get('map_yaw_error_deg'),
+                          'target':d.get('destination_id')}
+            if ch in ('cmd_vel_nav','cmd_vel_smoothed','cmd_vel_semantic','cmd_vel'):
+                maxv=velmax.setdefault(ch,{'linear':0.0,'angular':0.0})
+                for k,src in [('linear','vx'),('angular','wz')]:
+                    try:maxv[k]=max(maxv[k],abs(float(d[src])))
+                    except (KeyError,TypeError,ValueError):pass
+            counts['records']+=1
+    states=[s['state'] for s in state_changes]
+    if not states:verdict='NO_EVIDENCE'
+    elif guards or 'ERROR' in states or 'CANCELED' in states:verdict='FAILED_OR_INTERRUPTED'
+    elif states[-1]=='COMPLETED':verdict='SERVING_SEQUENCE_COMPLETED_REVIEW_PHYSICAL_METRICS'
+    elif states[-1]=='WAIT_LOAD':verdict='PICKUP_WAIT_LOAD_OBSERVED'
+    else:verdict='INCOMPLETE'
+    return {'verdict':verdict,'files':[str(x) for x in files],
+            'records':counts['records'],'channels':dict(channels),
+            'state_timeline':state_changes[-40:], 'nav_events':nav_events[-40:],
+            'guard_events':guards,'last_map_goal_error':pose_end,'peak_commands':velmax,
+            'limitations':['No verified Gazebo-world actual arrival unless separately measured',
+                           'A sent START/LOAD is not evidence that it completed',
+                           'Physical 1mm arrival cannot be inferred from path goal endpoint']}
+
+def main():
+    p=argparse.ArgumentParser();p.add_argument('files',nargs='+');p.add_argument('--out')
+    opts=p.parse_args();rep=report([Path(x).expanduser() for x in opts.files])
+    s=json.dumps(rep,ensure_ascii=False,indent=2);print(s)
+    if opts.out:Path(opts.out).expanduser().write_text(s+'\n',encoding='utf8')
+    return 0 if rep['verdict']!='NO_EVIDENCE' else 2
+if __name__=='__main__':raise SystemExit(main())

@@ -1,0 +1,157 @@
+{
+  "started": 1792974546.0876577,
+  "stage": {
+    "robot_01": {
+      "table": "table_01",
+      "request_id": "deadlockstage-robot_01-1792974578",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockstage-robot_01-1792974578",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "target_pose": [
+          1.6,
+          3.85,
+          -1.5707963267948966
+        ],
+        "pose_error": [
+          0.03705414031204505,
+          -0.1371780453504976
+        ],
+        "wall_time": 1792974668.7557077
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockstage-robot_01-1792974578",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.03705414031204505,
+        -0.1371780453504976
+      ],
+      "reason": null,
+      "actual_error_cm": 4.988614418675746
+    },
+    "robot_02": {
+      "table": "table_02",
+      "request_id": "deadlockstage-robot_02-1792974578",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockstage-robot_02-1792974578",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "handover": {
+        "target_pose": [
+          4.75,
+          3.85,
+          -1.5707963267948966
+        ],
+        "pose_error": [
+          0.03489900384044152,
+          -0.1509857525738483
+        ],
+        "wall_time": 1792974655.7944016
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockstage-robot_02-1792974578",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.03489900384044152,
+        -0.1509857525738483
+      ],
+      "reason": null,
+      "actual_error_cm": 1.6300106093637623
+    }
+  },
+  "swap_started": 1792974669.286484,
+  "swap": {
+    "robot_01": {
+      "table": "table_04",
+      "request_id": "deadlockswap-robot_01-1792974669",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockswap-robot_01-1792974669",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "target_pose": [
+          4.75,
+          -0.1499999999999999,
+          1.5707963267948966
+        ],
+        "pose_error": [
+          0.03233510323104017,
+          0.13898905238043957
+        ],
+        "wall_time": 1792974757.78673
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockswap-robot_01-1792974669",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.03233510323104017,
+        0.13898905238043957
+      ],
+      "reason": null,
+      "actual_error_cm": 7.538125315496995
+    },
+    "robot_02": {
+      "table": "table_03",
+      "request_id": "deadlockswap-robot_02-1792974669",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockswap-robot_02-1792974669",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "handover": {
+        "target_pose": [
+          1.6,
+          -0.1499999999999999,
+          1.5707963267948966
+        ],
+        "pose_error": [
+          0.01213833726079345,
+          -0.11653453681002146
+        ],
+        "wall_time": 1792974828.2543852
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockswap-robot_02-1792974669",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.01213833726079345,
+        -0.11653453681002146
+      ],
+      "reason": null,
+      "actual_error_cm": 0.26724146110710856
+    }
+  },
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_092909.csv"
+}

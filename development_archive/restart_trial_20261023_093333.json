@@ -1,0 +1,110 @@
+{
+  "submit": {
+    "ok": true,
+    "action": "SUBMIT",
+    "request_id": "restart-goal-20261023-r02",
+    "state": "QUEUED",
+    "new": true,
+    "robot_id": "robot_02"
+  },
+  "before": {
+    "robot_id": "robot_02",
+    "mission_phase": "GOING_DIRECT",
+    "goal_uuid": "a2f851ad84a74d48bb94445cb1f77e8d",
+    "goal_kind": "navigate_to_pose",
+    "goal_accepted": true,
+    "goal_publish_count": 1,
+    "goal_retry_count": 0,
+    "goal_feedback": {
+      "distance_remaining": 0.0,
+      "number_of_recoveries": 0
+    },
+    "goal_recovery_reason": null,
+    "goal_execution_verified_idle": false,
+    "confirmation_pose_valid": false,
+    "state": "GOING_DIRECT",
+    "map_valid": true,
+    "request_id": "restart-goal-20261023-r02",
+    "mode": "DELIVER_DIRECT",
+    "table": "table_01",
+    "target": "table_01",
+    "reason": null,
+    "fine": false,
+    "dynamic_hold": false,
+    "dynamic_stage": "TRACKING_5M",
+    "detour_active": false,
+    "pose_error": [
+      4.450000000000216,
+      -1.5707963267943614
+    ],
+    "target_pose": [
+      1.6,
+      1.9500000000000002,
+      1.5707963267948966
+    ],
+    "nav_ready": true,
+    "lifecycle": {
+      "amcl": 3,
+      "map_server": 3,
+      "controller_server": 3,
+      "bt_navigator": 3,
+      "collision_monitor": 3
+    }
+  },
+  "fleet_killed_pid": 169986,
+  "duplicate_after_fleet_restart": {
+    "ok": true,
+    "action": "SUBMIT",
+    "request_id": "restart-goal-20261023-r02",
+    "state": "RUNNING",
+    "new": false,
+    "robot_id": "robot_02"
+  },
+  "after_fleet": {
+    "robot_id": "robot_02",
+    "mission_phase": "GOING_DIRECT",
+    "goal_uuid": "a2f851ad84a74d48bb94445cb1f77e8d",
+    "goal_kind": "navigate_to_pose",
+    "goal_accepted": false,
+    "goal_publish_count": 1,
+    "goal_retry_count": 0,
+    "goal_feedback": {
+      "distance_remaining": 0.0,
+      "number_of_recoveries": 1
+    },
+    "goal_recovery_reason": null,
+    "goal_execution_verified_idle": true,
+    "confirmation_pose_valid": false,
+    "state": "GOING_DIRECT",
+    "map_valid": true,
+    "request_id": "restart-goal-20261023-r02",
+    "mode": "DELIVER_DIRECT",
+    "table": "table_01",
+    "target": "table_01",
+    "reason": null,
+    "fine": false,
+    "dynamic_hold": true,
+    "dynamic_stage": "TRACK_UNCERTAIN",
+    "detour_active": false,
+    "pose_error": [
+      4.450000000000216,
+      -1.5707963267943614
+    ],
+    "target_pose": [
+      1.6,
+      1.9500000000000002,
+      1.5707963267948966
+    ],
+    "nav_ready": true,
+    "lifecycle": {
+      "amcl": 3,
+      "map_server": 3,
+      "controller_server": 3,
+      "bt_navigator": 3,
+      "collision_monitor": 3
+    }
+  },
+  "supervisor_killed_pid": 169981,
+  "error": "Real runtime did not reach required state",
+  "success": false
+}

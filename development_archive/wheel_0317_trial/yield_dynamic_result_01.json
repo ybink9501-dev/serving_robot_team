@@ -1,0 +1,113 @@
+{
+  "started": 1792991808.8000398,
+  "stage": {
+    "robot_01": {
+      "table": "table_03",
+      "request_id": "deadlockstage-robot_01-1792991840",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockstage-robot_01-1792991840",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      },
+      "handover": {
+        "target_pose": [
+          1.6,
+          -0.1499999999999999,
+          1.5707963267948966
+        ],
+        "pose_error": [
+          0.043822299364270345,
+          0.1370126086336343
+        ],
+        "wall_time": 1792991877.8183877
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockstage-robot_01-1792991840",
+        "robot": "robot_01"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.043822299364270345,
+        0.1370126086336343
+      ],
+      "reason": null,
+      "actual_error_cm": 5.271284802606226
+    },
+    "robot_02": {
+      "table": "table_04",
+      "request_id": "deadlockstage-robot_02-1792991841",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockstage-robot_02-1792991841",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "handover": {
+        "target_pose": [
+          4.75,
+          -0.1499999999999999,
+          1.5707963267948966
+        ],
+        "pose_error": [
+          0.035196024076216186,
+          -0.15768365627094005
+        ],
+        "wall_time": 1792991868.732116
+      },
+      "complete": {
+        "ok": true,
+        "action": "COMPLETE",
+        "request_id": "deadlockstage-robot_02-1792991841",
+        "robot": "robot_02"
+      },
+      "final_state": "COMPLETED",
+      "final_pose_error": [
+        0.035196024076216186,
+        -0.15768365627094005
+      ],
+      "reason": null,
+      "actual_error_cm": 3.348995469759159
+    }
+  },
+  "swap_started": 1792991878.4300075,
+  "swap": {
+    "robot_01": {
+      "table": "table_04",
+      "request_id": "deadlockswap-robot_01-1792991878",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockswap-robot_01-1792991878",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_01"
+      }
+    },
+    "robot_02": {
+      "table": "table_03",
+      "request_id": "deadlockswap-robot_02-1792991878",
+      "submit": {
+        "ok": true,
+        "action": "SUBMIT",
+        "request_id": "deadlockswap-robot_02-1792991878",
+        "state": "QUEUED",
+        "new": true,
+        "robot_id": "robot_02"
+      },
+      "final_state": "ERROR",
+      "final_pose_error": [
+        1.8388252336718758,
+        -0.7316696886494352
+      ],
+      "reason": "Configured goal timeout exceeded"
+    }
+  },
+  "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_141653.csv"
+}

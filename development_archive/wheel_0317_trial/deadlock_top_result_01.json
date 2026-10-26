@@ -1,0 +1,80 @@
+{
+  "robot_01": {
+    "table": "table_02",
+    "request_id": "deadlocktop-robot_01-1792948078",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "deadlocktop-robot_01-1792948078",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_01"
+    },
+    "handover": {
+      "target_pose": [
+        4.75,
+        3.85,
+        -1.5707963267948966
+      ],
+      "pose_error": [
+        0.03320319271126465,
+        -0.13676258857320955
+      ],
+      "wall_time": 1792948206.12834
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "deadlocktop-robot_01-1792948078",
+      "robot": "robot_01"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.03320319271126465,
+      -0.13676258857320955
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_020728.csv",
+    "actual_error_cm": 3.6723668062608947,
+    "tf_gt_cm": 0.4516643803173479
+  },
+  "robot_02": {
+    "table": "table_01",
+    "request_id": "deadlocktop-robot_02-1792948079",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "deadlocktop-robot_02-1792948079",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_02"
+    },
+    "handover": {
+      "target_pose": [
+        1.6,
+        3.85,
+        -1.5707963267948966
+      ],
+      "pose_error": [
+        0.035860631971160024,
+        0.14001651516088742
+      ],
+      "wall_time": 1792948221.454844
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "deadlocktop-robot_02-1792948079",
+      "robot": "robot_02"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.035860631971160024,
+      0.14001651516088742
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261026_020728.csv",
+    "actual_error_cm": 3.2653138083046396,
+    "tf_gt_cm": 1.209861716270912
+  }
+}

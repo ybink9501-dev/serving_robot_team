@@ -1,0 +1,80 @@
+{
+  "robot_01": {
+    "table": "table_02",
+    "request_id": "cross0320-robot_01-1792939555",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "cross0320-robot_01-1792939555",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_01"
+    },
+    "handover": {
+      "target_pose": [
+        4.75,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.03408440536022506,
+        0.13848444964033327
+      ],
+      "wall_time": 1792939764.2645433
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "cross0320-robot_01-1792939555",
+      "robot": "robot_01"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.03408440536022506,
+      0.13848444964033327
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261025_234524.csv",
+    "actual_error_cm": 21.085271966105424,
+    "tf_gt_cm": 23.661343994889926
+  },
+  "robot_02": {
+    "table": "table_01",
+    "request_id": "cross0320-robot_02-1792939555",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "cross0320-robot_02-1792939555",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_02"
+    },
+    "handover": {
+      "target_pose": [
+        1.6,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.03632531241229085,
+        0.13817588365812483
+      ],
+      "wall_time": 1792939877.9951873
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "cross0320-robot_02-1792939555",
+      "robot": "robot_02"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.03632531241229085,
+      0.13817588365812483
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261025_234524.csv",
+    "actual_error_cm": 14.885428675083359,
+    "tf_gt_cm": 18.511011272591084
+  }
+}

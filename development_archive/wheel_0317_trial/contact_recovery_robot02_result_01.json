@@ -1,0 +1,40 @@
+{
+  "started": 1792976596.1970148,
+  "request_id": "contactprobe-1792976619",
+  "submit": {
+    "ok": true,
+    "action": "SUBMIT",
+    "request_id": "contactprobe-1792976619",
+    "state": "QUEUED",
+    "new": true,
+    "robot_id": "robot_02"
+  },
+  "spawn_at": 1792976625.8516781,
+  "spawn_gt": [
+    5.068552419098555,
+    -0.19125902399883588
+  ],
+  "contact_seen_at": 1792976626.771288,
+  "clear_at": 1792976633.6890829,
+  "handover": {
+    "target_pose": [
+      4.75,
+      -0.1499999999999999,
+      1.5707963267948966
+    ],
+    "pose_error": [
+      0.035010846203799885,
+      -0.13669497452175805
+    ],
+    "wall_time": 1792976645.9938867
+  },
+  "complete": {
+    "ok": true,
+    "action": "COMPLETE",
+    "request_id": "contactprobe-1792976619",
+    "robot": "robot_02"
+  },
+  "final_state": "COMPLETED",
+  "reason": null,
+  "trace": "/home/user/team_serving_robot_clean_20261022/_local_only/wheel_0317_trial/contact_recovery_robot02_trace_01.jsonl"
+}

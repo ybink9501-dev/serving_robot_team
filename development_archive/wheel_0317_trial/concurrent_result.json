@@ -1,0 +1,80 @@
+{
+  "robot_01": {
+    "table": "table_01",
+    "request_id": "concurrent08-robot_01-1792937628",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "concurrent08-robot_01-1792937628",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_01"
+    },
+    "handover": {
+      "target_pose": [
+        1.6,
+        1.9500000000000002,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.06901788623334233,
+        -0.01750111443032654
+      ],
+      "wall_time": 1792937684.9901745
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "concurrent08-robot_01-1792937628",
+      "robot": "robot_01"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.06901788623334233,
+      -0.01750111443032654
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261025_231322.csv",
+    "actual_error_cm": 3.723405947051809,
+    "tf_gt_cm": 3.1826261232673985
+  },
+  "robot_02": {
+    "table": "table_04",
+    "request_id": "concurrent08-robot_02-1792937629",
+    "submit": {
+      "ok": true,
+      "action": "SUBMIT",
+      "request_id": "concurrent08-robot_02-1792937629",
+      "state": "QUEUED",
+      "new": true,
+      "robot_id": "robot_02"
+    },
+    "handover": {
+      "target_pose": [
+        4.75,
+        -0.1499999999999999,
+        1.5707963267948966
+      ],
+      "pose_error": [
+        0.07420813029820236,
+        -0.14302154405065126
+      ],
+      "wall_time": 1792937654.4917128
+    },
+    "complete": {
+      "ok": true,
+      "action": "COMPLETE",
+      "request_id": "concurrent08-robot_02-1792937629",
+      "robot": "robot_02"
+    },
+    "final_state": "COMPLETED",
+    "final_pose_error": [
+      0.07420813029820236,
+      -0.14302154405065126
+    ],
+    "reason": null,
+    "metrics": "/home/user/team_serving_robot_clean_20261022/_local_only/metrics/measure_20261025_231322.csv",
+    "actual_error_cm": 7.211181751493623,
+    "tf_gt_cm": 0.29823907755611284
+  }
+}

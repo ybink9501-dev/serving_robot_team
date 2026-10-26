@@ -1,0 +1,23 @@
+# Shared configurable thresholds. Re-run tools/configure_runtime.py and rebuild/restart after edits.
+# design_clearance_m is a separate design requirement, not a person SLOW/STOP override.
+navigation:
+  max_forward_mps: 0.25
+  max_yaw_rps: 0.8
+  goal_xy_tolerance_m: 0.1
+  goal_yaw_tolerance_rad: 0.25
+arrival:
+  xy_tolerance_m: 0.1
+  yaw_tolerance_rad: 0.25
+  fine_engage_max_m: 0.2
+  fine_timeout_s: 45.0
+safety:
+  design_clearance_m: 2.5
+  person_slow_m: 1.5
+  person_stop_m: 0.8
+  stationary_replan_s: 20.0
+  scan_timeout_s: 0.5
+  command_timeout_s: 0.5
+fleet:
+  robot_separation_m: 0.9
+  zone_approach_margin_m: 0.45
+  blocked_alert_s: 20.0
