@@ -1,9 +1,0 @@
-max_linear_mps: 0.25
-max_angular_rps: 0.80
-
-slow_linear_mps: 0.10
-
-cmd_vel_timeout_s: 0.50
-
-person_slow_distance_m: 1.50
-person_stop_distance_m: 0.80

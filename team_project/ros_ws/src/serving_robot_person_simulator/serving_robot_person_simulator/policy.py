@@ -132,6 +132,9 @@ class Walker:
     person_block_tick: float | None = None
     person_pass_since: float | None = None
     person_retreats: int = 0
+    # Robot-encounter behaviour (used only with the manager parameter robot_encounter:=mixed)
+    encounter: str | None = None
+    evade: dict | None = None
 
 
 def validate_spawn_positions(starts, robot, existing, robot_margin, person_margin):
@@ -344,3 +347,55 @@ class PersonRules:
         w.person_block_since = now
         w.person_block_tick = now
         return 'grant'
+
+
+# ---------------------------------------------------------------------------
+# Robot encounter behaviours (used only when the manager runs with robot_encounter:=mixed)
+# ---------------------------------------------------------------------------
+ENCOUNTER_BEHAVIORS = ('wait', 'block', 'back_off', 'sidestep')   # 25 % each unless told otherwise
+SIDESTEP_OFFSET_M = 0.5      # NEW, TEST-ONLY, NOT YET APPROVED: lateral distance of a sidestep
+EVADE_MOVE_TIMEOUT_S = 6.0   # NEW, TEST-ONLY, NOT YET APPROVED: longest evasive move
+
+
+def draw_encounter(rng):
+    """One draw per robot encounter; the four behaviours are equally likely (25 % each)."""
+    return ENCOUNTER_BEHAVIORS[min(int(rng.random() * 100 // 25), 3)]
+
+
+def _lane_axis(lane_start, lane_end):
+    length = math.dist(lane_start, lane_end)
+    if length <= 0:
+        raise ValueError('lane has no length')
+    return (lane_end[0] - lane_start[0]) / length, (lane_end[1] - lane_start[1]) / length
+
+
+def plan_evade(kind, person, lane_start, lane_end, robot, now):
+    """Fix the direction of an evasive move when the encounter starts (never re-decided)."""
+    ux, uy = _lane_axis(lane_start, lane_end)
+    rx, ry = person[0] - robot[0], person[1] - robot[1]          # robot -> person
+    if kind == 'back_off':       # backwards along the lane, away from the robot
+        s = 1.0 if rx * ux + ry * uy >= 0 else -1.0
+        direction = (s * ux, s * uy)
+    elif kind == 'sidestep':     # sideways, away from the robot
+        nx, ny = -uy, ux
+        s = 1.0 if rx * nx + ry * ny >= 0 else -1.0
+        direction = (s * nx, s * ny)
+    else:
+        raise ValueError(f'unknown evasive behaviour: {kind}')
+    return {'kind': kind, 'dir': direction, 'origin': tuple(person), 't0': now}
+
+
+def evade_velocity(plan, person, lane_start, lane_end, speed, now):
+    """World-frame velocity of the evasive move; (0.0, 0.0) = hold position (finished or not possible)."""
+    if now - plan['t0'] >= EVADE_MOVE_TIMEOUT_S:
+        return (0.0, 0.0)
+    dx, dy = plan['dir']
+    if plan['kind'] == 'sidestep':
+        if math.dist(person, plan['origin']) >= SIDESTEP_OFFSET_M:
+            return (0.0, 0.0)
+    else:   # back_off: never leave the lane segment
+        ux, uy = _lane_axis(lane_start, lane_end)
+        end = lane_end if dx * ux + dy * uy > 0 else lane_start
+        if math.dist(person, end) < 0.12:
+            return (0.0, 0.0)
+    return (speed * dx, speed * dy)

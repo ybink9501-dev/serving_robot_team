@@ -1,8 +1,0 @@
-map_revision: 1
-waypoints:
-- id: wp_table_01
-  entity_id: table_01
-  pose:
-    x: 0.014
-    y: 0.212
-    yaw: 3.141592653589793
