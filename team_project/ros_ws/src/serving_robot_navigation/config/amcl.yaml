@@ -1,0 +1,12 @@
+/robot_01/amcl:
+  ros__parameters:
+    use_sim_time: true
+
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    global_frame_id: map
+
+    scan_topic: /robot_01/scan
+    tf_broadcast: true
+
+    set_initial_pose: false

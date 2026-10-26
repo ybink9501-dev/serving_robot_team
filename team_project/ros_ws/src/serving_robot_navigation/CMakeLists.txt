@@ -13,4 +13,10 @@ install(
   PATTERN ".gitkeep" EXCLUDE
 )
 
+install(
+  PROGRAMS
+    scripts/navigate_destination.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()
