@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-import math
 import unittest
 import random
 import yaml
@@ -75,74 +74,5 @@ class PolicyTests(unittest.TestCase):
     def test_reject_unowned_name(self):
         with self.assertRaises(ValueError):
             make_person_sdf('robot_01',0,0)
-
-from serving_robot_person_simulator.policy import (
-    ENCOUNTER_BEHAVIORS, EVADE_MOVE_TIMEOUT_S, SIDESTEP_OFFSET_M, Walker, draw_encounter, evade_velocity, plan_evade)
-
-
-class EncounterBehaviourTests(unittest.TestCase):
-    LANE = ((0.0, -1.7), (0.0, 2.3))
-
-    class FixedRng:
-        def __init__(self, value):
-            self.value = value
-
-        def random(self):
-            return self.value
-
-    def test_quarters_map_to_the_four_behaviours(self):
-        got = [draw_encounter(self.FixedRng(v)) for v in (0.0, 0.2499, 0.25, 0.4999, 0.5, 0.7499, 0.75, 0.9999)]
-        self.assertEqual(got, ['wait', 'wait', 'block', 'block', 'back_off', 'back_off', 'sidestep', 'sidestep'])
-        self.assertEqual(ENCOUNTER_BEHAVIORS, ('wait', 'block', 'back_off', 'sidestep'))
-
-    def test_draw_is_uniform_25_percent_each(self):
-        rng = random.Random(5)
-        counts = {k: 0 for k in ENCOUNTER_BEHAVIORS}
-        for _ in range(100000):
-            counts[draw_encounter(rng)] += 1
-        for kind, n in counts.items():
-            self.assertAlmostEqual(n / 100000, 0.25, delta=0.01, msg=kind)
-
-    def test_back_off_moves_away_along_the_lane_from_either_side(self):
-        for robot, expected_sign in (((0.0, 1.0), -1.0), ((0.0, -1.0), 1.0)):
-            plan = plan_evade('back_off', (0.0, 0.0), *self.LANE, robot, 0.0)
-            vx, vy = evade_velocity(plan, (0.0, 0.0), *self.LANE, 0.15, 0.1)
-            self.assertAlmostEqual(vx, 0.0)
-            self.assertAlmostEqual(vy, expected_sign * 0.15)
-            before = math.dist((0.0, 0.0), robot)
-            after = math.dist((vx, vy), robot)          # one second later
-            self.assertGreater(after, before)
-
-    def test_back_off_holds_at_the_lane_end(self):
-        plan = plan_evade('back_off', (0.0, -1.65), *self.LANE, (0.0, 0.0), 0.0)   # robot ahead, lane start behind
-        self.assertEqual(evade_velocity(plan, (0.0, -1.65), *self.LANE, 0.15, 0.1), (0.0, 0.0))
-
-    def test_sidestep_is_perpendicular_away_from_robot_and_stops_after_the_offset(self):
-        person, robot = (0.0, 0.0), (0.3, 0.5)
-        plan = plan_evade('sidestep', person, *self.LANE, robot, 0.0)
-        self.assertAlmostEqual(plan['dir'][0] * 0.0 + plan['dir'][1] * 1.0, 0.0)   # perpendicular to the lane axis
-        pos, t = list(person), 0.0
-        while True:
-            v = evade_velocity(plan, tuple(pos), *self.LANE, 0.15, t)
-            if v == (0.0, 0.0):
-                break
-            pos[0] += v[0] * 0.1
-            pos[1] += v[1] * 0.1
-            t += 0.1
-            self.assertLess(t, EVADE_MOVE_TIMEOUT_S)
-        self.assertAlmostEqual(math.dist(person, pos), SIDESTEP_OFFSET_M, delta=0.02)
-        self.assertGreater(math.dist(pos, robot), math.dist(person, robot))
-
-    def test_evasive_move_times_out_and_unknown_kind_is_rejected(self):
-        plan = plan_evade('sidestep', (0.0, 0.0), *self.LANE, (1.0, 0.0), 10.0)
-        self.assertEqual(evade_velocity(plan, (0.0, 0.0), *self.LANE, 0.15, 10.0 + EVADE_MOVE_TIMEOUT_S), (0.0, 0.0))
-        with self.assertRaises(ValueError):
-            plan_evade('dance', (0.0, 0.0), *self.LANE, (1.0, 0.0), 0.0)
-
-    def test_walker_defaults_leave_the_old_behaviour_untouched(self):
-        w = Walker(1, 'test_person_01', (0.0, 0.0), (1.0, 0.0))
-        self.assertIsNone(w.encounter)
-        self.assertIsNone(w.evade)
-
 
 if __name__=='__main__': unittest.main()

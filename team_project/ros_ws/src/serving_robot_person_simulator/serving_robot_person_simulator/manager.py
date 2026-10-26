@@ -20,9 +20,8 @@ import yaml
 
 from .gazebo_api import spawn, remove
 from .pose_cli import PoseStream
-from .policy import (PersonRules, Walker, apply_deadlock_overlay, decide_action, draw_encounter,
-                     draw_speed, evade_velocity, next_time, plan_evade, validate,
-                     validate_spawn_positions)
+from .policy import (PersonRules, Walker, apply_deadlock_overlay, decide_action, draw_speed,
+                     next_time, validate, validate_spawn_positions)
 
 
 def xy(transform):
@@ -47,12 +46,6 @@ class Manager(Node):
             with open(overlay_path, encoding='utf-8') as f:
                 self.cfg = apply_deadlock_overlay(self.cfg, yaml.safe_load(f))
         self.rules = PersonRules(self.cfg)
-        # Robot encounters: 'yield' = original 80/20 yield (default), 'mixed' = wait/block/back_off/sidestep.
-        self.declare_parameter('robot_encounter', 'yield')
-        encounter_mode = self.get_parameter('robot_encounter').value
-        if encounter_mode not in ('yield', 'mixed'):
-            raise ValueError("robot_encounter must be 'yield' or 'mixed'")
-        self.encounter_mixed = encounter_mode == 'mixed'
         self.world=self.cfg['world']
         self.prefix=self.cfg['model_prefix']
         self.robot_names=self.cfg.get('robot_models',[self.cfg['robot_model']])
@@ -422,10 +415,7 @@ class Manager(Node):
                 w.proximity_hold=True
             elif robot_dist >= self.cfg['robot_release_radius_m']:
                 w.proximity_hold=False
-                if not self.encounter_mixed or robot_dist>=1.35+self.cfg['robot_release_radius_m']-self.cfg['robot_stop_radius_m']:
-                    # mixed mode: one choice per encounter; it ends only 0.20 m (= existing release-stop gap) beyond the 1.35 m trigger
-                    w.yield_selected=None
-                    w.encounter=None;w.evade=None
+                w.yield_selected=None
             peers=[(j,q,self.people[j].published_v,self.people[j])
                    for j,q in actual_positions.items() if j!=ident and q is not None]
             if len(peers)!=max(0,len(self.people)-1):
@@ -433,11 +423,8 @@ class Manager(Node):
             self.rules.begin(w,now,person,peers)
             # Yield decision cached per encounter, not rerolled each frame.
             if robot_dist<1.35 and w.yield_selected is None:
-                if self.encounter_mixed:
-                    self._choose_encounter(ident,w,person,robots,now)
-                else:
-                    w.yield_selected=self.rng.random()*100<self.cfg['behavior']['give_way_percent']
-                    self.record('give_way_choice',id=ident,choice='yield' if w.yield_selected else 'non_yield')
+                w.yield_selected=self.rng.random()*100<self.cfg['behavior']['give_way_percent']
+                self.record('give_way_choice',id=ident,choice='yield' if w.yield_selected else 'non_yield')
             should_yield=robot_dist<1.35 and w.yield_selected is True
             if w.proximity_hold or should_yield:
                 self.send_zero(ident);continue
@@ -493,10 +480,6 @@ class Manager(Node):
                 self.send_zero(ident)
                 continue
             vx=speed*dx/length;vy=speed*dy/length
-            if w.evade is not None:   # back_off / sidestep: same safety gates below still apply
-                vx,vy=self._evade_override(ident,w,person,now,speed)
-                if vx==0.0 and vy==0.0:
-                    self.send_zero(ident);continue
             if self.rules.hold_blocked(w, person, (vx, vy), peers):
                 self._person_block(ident, w, now, person, peers)
                 self.send_zero(ident)
@@ -520,50 +503,6 @@ class Manager(Node):
             w.published_v=(vx,vy)
             w.last_position=person
 
-    def _choose_encounter(self,ident,w,person,robots,now):
-        """Mixed mode: one of wait/block/back_off/sidestep (25 % each), decided once per encounter."""
-        kind=draw_encounter(self.rng)
-        w.encounter=kind
-        w.yield_selected=(kind=='wait')   # wait == the existing yield behaviour
-        try:
-            if kind=='block':             # stand still like the existing long_block pause
-                w.phase='long_block';w.current_action='long_block'
-                w.until=now+self.rng.uniform(*self.cfg['behavior']['long_block_pause_s'])
-            elif kind in ('back_off','sidestep'):
-                nearest=min(robots,key=lambda r: math.dist(person,r))
-                w.evade=plan_evade(kind,person,w.start,w.end,nearest,now)
-        except Exception as exc:          # never let this feature take the manager down: fall back to waiting
-            w.yield_selected=True;w.evade=None
-            self.record('encounter_error',id=ident,kind=kind,error=repr(exc))
-            return
-        self.record('encounter_choice',id=ident,kind=kind)
-
-    def _evade_override(self,ident,w,person,now,speed):
-        try:
-            plan=w.evade
-            velocity=evade_velocity(plan,person,w.start,w.end,speed,now)
-            if velocity==(0.0,0.0):
-                return velocity
-            previous=plan.setdefault('progress_xy',person)
-            progress_time=plan.setdefault('progress_s',now)
-            # A full control tick of motion must occur within the existing
-            # pose timeout. Stop pushing when a fixed obstacle blocks a move.
-            along=sum((person[i]-previous[i])*plan['dir'][i] for i in (0,1))
-            if along>=speed/self.cfg['control_rate_hz']:
-                plan['progress_xy']=person
-                plan['progress_s']=now
-            elif now-progress_time>=self.cfg['pose_timeout_s']:
-                self.record('encounter_blocked',id=ident,kind=w.encounter,
-                            x=round(person[0],3),y=round(person[1],3))
-                w.evade=None
-                w.yield_selected=True
-                return (0.0,0.0)
-            return velocity
-        except Exception as exc:
-            w.evade=None
-            self.record('encounter_error',id=ident,kind=w.encounter,error=repr(exc))
-            return (0.0,0.0)
-
     def _person_block(self,ident,w,now,person,peers):
         event=self.rules.mark(ident,w,now,person,peers,True)
         if event=='grant':
@@ -578,10 +517,10 @@ class Manager(Node):
                 'paused':w.paused,'phase':w.phase,'action':w.current_action,
                 'guest_stage':w.guest_stage,
                 'velocity_cmd':w.published_v,'target_end':w.target_end,'goal':w.end if w.target_end else w.start,'person_hold':w.person_hold,'proximity_hold':w.proximity_hold,'yield_selected':w.yield_selected,
-                'person_pass':w.person_pass,'deadlock_retreats':w.person_retreats,'encounter':w.encounter})
+                'person_pass':w.person_pass,'deadlock_retreats':w.person_retreats})
         payload={'seed':self.seed,'world':self.world,'paused':self.main_paused,
                  'robot_pose_valid':all(self.fresh_pose(r) is not None for r in self.robot_names),
-                 'configured_lanes':len(self.cfg['lanes']),'deadlock_resolution':self.rules.enabled,'robot_encounter':'mixed' if self.encounter_mixed else 'yield','people':people,'error':self.last_error if error is None else error,
+                 'configured_lanes':len(self.cfg['lanes']),'deadlock_resolution':self.rules.enabled,'people':people,'error':self.last_error if error is None else error,
                  'gazebo_pose_stream_alive':self.pose_stream.alive(),
                  'test_spawn':self.test_spawn_result}
         output=String();output.data=json.dumps(payload,ensure_ascii=False)

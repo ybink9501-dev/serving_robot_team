@@ -28,9 +28,6 @@ def nodes(context, *args, **kwargs):
             'config','deadlock_resolution.yaml')
         if not os.path.isfile(overlay):
             raise FileNotFoundError('deadlock overlay not found: '+overlay)
-    encounter=LaunchConfiguration('robot_encounter').perform(context).strip().lower()
-    if encounter not in ('yield','mixed'):
-        raise ValueError('robot_encounter must be yield or mixed')
     world=cfg['world']
     prefix=cfg['model_prefix']
     if prefix!='test_person_':
@@ -39,7 +36,7 @@ def nodes(context, *args, **kwargs):
     # Gazebo named poses are read by manager's independent gz CLI stream.
     topics = [f'/model/{prefix}{i:02d}/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist'
                for i in range(1,9)]
-    params={'config_path':config,'use_sim_time':True,'robot_encounter':encounter}
+    params={'config_path':config,'use_sim_time':True}
     if enabled:
         params['overlay_config_path']=overlay
     actions=[
@@ -60,8 +57,6 @@ def nodes(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('config',default_value='',description='Absolute path to approved policy.yaml'),
-        DeclareLaunchArgument('robot_encounter',default_value='yield',
-            description='Optional robot encounter behavior: yield or mixed'),
         DeclareLaunchArgument('deadlock_resolution',default_value='false',
             description="'true' enables the TEST-ONLY person-person deadlock breaker (default 'false')"),
         DeclareLaunchArgument('deadlock_overlay',default_value='',
