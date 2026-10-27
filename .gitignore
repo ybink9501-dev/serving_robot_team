@@ -1,3 +1,11 @@
 
 # Large simulation runtime records
 *.jsonl
+
+# Local ROS build and experiment data
+team_project/_local_only/
+team_project/ros_ws/build/
+team_project/ros_ws/install/
+team_project/ros_ws/log/
+**/__pycache__/
+*.pyc

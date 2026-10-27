@@ -26,7 +26,7 @@ def setup(context):
     if LaunchConfiguration('gui').perform(context)=='false':args='-s --headless-rendering '+args
     actions=[IncludeLaunchDescription(PythonLaunchDescriptionSource(str(Path(share('ros_gz_sim'))/'launch/gz_sim.launch.py')),
          launch_arguments={'gz_args':args,'on_exit_shutdown':'true'}.items()),
-         Node(package='serving_robot_gazebo',executable='team_sim_clock',name='team_sim_clock')]
+         Node(package='cafe_autonomy_gazebo',executable='team_sim_clock',name='team_sim_clock')]
     loader=Node(package='cafe_autonomy',executable='contact_loader',name='contact_system_loader',output='screen')
     spawns=[]
     for r,pose in c['robots'].items():
@@ -127,7 +127,7 @@ def setup(context):
                     n('mission',params=[{'use_sim_time':True,'robot_id':r,'waypoints_file':c['waypoints_file'],'state_file':str(cfg.parents[2]/'_local_only/missions'/(r+'.json')),'runtime_limits_file':c['limits_file']}]),
                     n('rgbd_people',params=[{'use_sim_time':True,'robot_id':r,'weights':c['perception']['weights'],'timeout_s':c['perception']['timeout_s']}])]
     if mode=='operation':
-        actions += [Node(package='serving_robot_gazebo',executable='gazebo_truth_evidence',name='gazebo_truth_evidence'),
+        actions += [Node(package='cafe_autonomy_gazebo',executable='gazebo_truth_evidence',name='gazebo_truth_evidence'),
                     Node(package='cafe_autonomy',executable='fleet',name='cafe_fleet',respawn=True,respawn_delay=2.,parameters=[{'use_sim_time':True,'http_port':c['http_port'],'database_path':c['database_path'],'runtime_limits_file':c['limits_file'],'zones_file':c['zones_file'],'waypoints_file':c['waypoints_file']}],output='screen'),
                     Node(package='cafe_autonomy',executable='metrics',name='cafe_metrics',parameters=[{'use_sim_time':True,'log_directory':str(cfg.parents[2]/'_local_only/metrics'),'alignment_x':c['world_to_map']['x'],'alignment_y':c['world_to_map']['y'],'alignment_yaw':c['world_to_map']['yaw']}],output='screen')]
     def after_contact(event,context):
