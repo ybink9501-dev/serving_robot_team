@@ -14,7 +14,7 @@ from rclpy.time import Time
 from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PoseArray, Pose
 from std_msgs.msg import String
-from tf2_ros import Buffer,TransformListener
+from tf2_ros import Buffer,TransformListener,TransformException
 
 
 class Detector(Node):
@@ -87,7 +87,10 @@ class Detector(Node):
                         d=float(np.percentile(valid,25));u=(x1+x2)/2;vv=(y1+y2)/2
                         # Gazebo camera_link: x forward, y left, z up. Intrinsics use optical convention.
                         q=np.array([d,-(u-info.k[2])*d/info.k[0],-(vv-info.k[5])*d/info.k[4]])
-                        tf=self.tf.lookup_transform('map',self.robot+'/'+v+'_camera_link',Time.from_msg(rgb.header.stamp))
+                        try:
+                            tf=self.tf.lookup_transform('map',self.robot+'/camera_'+v+'_link',Time.from_msg(rgb.header.stamp))
+                        except TransformException:
+                            tf=self.tf.lookup_transform('map',self.robot+'/'+v+'_camera_link',Time.from_msg(rgb.header.stamp))
                         rot=tf.transform.rotation;xyz=np.array([rot.x,rot.y,rot.z]);qw=rot.w
                         q=q+2*np.cross(xyz,np.cross(xyz,q)+qw*q)
                         tr=tf.transform.translation;detections.append([q[0]+tr.x,q[1]+tr.y,q[2]+tr.z])

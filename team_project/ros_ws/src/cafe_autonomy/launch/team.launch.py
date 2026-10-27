@@ -44,25 +44,35 @@ def setup(context):
                     elem=plugin.find(tag)
                     if elem is None:elem=ET.SubElement(plugin,tag)
                     elem.text=text
-        for el in tree.findall('.//gz_frame_id'):el.text=r+'/laser_link'
-        # Add registered RGB-D cameras without replacing the TEAM chassis or LiDAR.
-        for view,a in [('front',0.0),('rear_left',2.09439510239),('rear_right',-2.09439510239)]:
-            link=view+'_camera_link'
-            ET.SubElement(tree,'link',{'name':link})
-            j=ET.SubElement(tree,'joint',{'name':view+'_camera_joint','type':'fixed'})
-            ET.SubElement(j,'parent',{'link':'base_link'});ET.SubElement(j,'child',{'link':link})
-            ET.SubElement(j,'origin',{'xyz':f"0 0 {c['perception']['mount_z']}",'rpy':f'0 0 {a}'})
-            g=ET.SubElement(tree,'gazebo',{'reference':link})
-            sensor=ET.SubElement(g,'sensor',{'name':view+'_rgbd','type':'rgbd_camera'})
-            ET.SubElement(sensor,'always_on').text='true'
-            ET.SubElement(sensor,'update_rate').text=str(c['perception']['front_hz'] if view=='front' else c['perception']['rear_hz'])
-            ET.SubElement(sensor,'topic').text=f'/model/{r}/camera/{view}'
-            ET.SubElement(sensor,'gz_frame_id').text=r+'/'+link
-            camera=ET.SubElement(sensor,'camera')
-            ET.SubElement(camera,'horizontal_fov').text=str(c['perception']['horizontal_fov'])
-            image=ET.SubElement(camera,'image')
-            for tag,value in [('width','320'),('height','240'),('format','R8G8B8')]:ET.SubElement(image,tag).text=value
-            clip=ET.SubElement(camera,'clip');ET.SubElement(clip,'near').text='0.1';ET.SubElement(clip,'far').text='8.0'
+        for gazebo in tree.findall('.//gazebo'):
+            link = gazebo.attrib.get('reference', '')
+            if link == 'laser_link' or link.startswith('camera_'):
+                for el in gazebo.findall('.//gz_frame_id'):
+                    el.text = r + '/' + link
+        # Reuse the three RGB-D cameras provided by the latest TEAM model.
+        camera_links = [e.attrib.get("name") for e in tree.findall("link")]
+        present = [name in camera_links for name in ("camera_front_link", "camera_rear_left_link", "camera_rear_right_link")]
+        if any(present) and not all(present):
+            raise ValueError("TEAM model has only some of the required RGB-D cameras")
+        team_cameras = all(present)
+        if not team_cameras:
+            for view,a in [('front',0.0),('rear_left',2.09439510239),('rear_right',-2.09439510239)]:
+                link=view+'_camera_link'
+                ET.SubElement(tree,'link',{'name':link})
+                j=ET.SubElement(tree,'joint',{'name':view+'_camera_joint','type':'fixed'})
+                ET.SubElement(j,'parent',{'link':'base_link'});ET.SubElement(j,'child',{'link':link})
+                ET.SubElement(j,'origin',{'xyz':f"0 0 {c['perception']['mount_z']}",'rpy':f'0 0 {a}'})
+                g=ET.SubElement(tree,'gazebo',{'reference':link})
+                sensor=ET.SubElement(g,'sensor',{'name':view+'_rgbd','type':'rgbd_camera'})
+                ET.SubElement(sensor,'always_on').text='true'
+                ET.SubElement(sensor,'update_rate').text=str(c['perception']['front_hz'] if view=='front' else c['perception']['rear_hz'])
+                ET.SubElement(sensor,'topic').text=f'/model/{r}/camera/{view}'
+                ET.SubElement(sensor,'gz_frame_id').text=r+'/'+link
+                camera=ET.SubElement(sensor,'camera')
+                ET.SubElement(camera,'horizontal_fov').text=str(c['perception']['horizontal_fov'])
+                image=ET.SubElement(camera,'image')
+                for tag,value in [('width','320'),('height','240'),('format','R8G8B8')]:ET.SubElement(image,tag).text=value
+                clip=ET.SubElement(camera,'clip');ET.SubElement(clip,'near').text='0.1';ET.SubElement(clip,'far').text='8.0'
         description=ET.tostring(tree,encoding='unicode')
         generated=cfg.parents[2]/'_local_only/generated_models';generated.mkdir(parents=True,exist_ok=True)
         urdf=generated/(r+'.urdf');urdf.write_text(description)
@@ -88,7 +98,8 @@ def setup(context):
             remaps.append((src,f'/{r}/contacts/sensor_{index}'))
         for view in ('front','rear_left','rear_right'):
             for topic,typ,gztyp in [('image','Image','Image'),('depth_image','Image','Image'),('camera_info','CameraInfo','CameraInfo')]:
-                src=f'/model/{r}/camera/{view}/{topic}'
+                camera_name = "camera_"+view if team_cameras else "camera/"+view
+                src=f'/model/{r}/{camera_name}/{topic}'
                 bridge_args.append(f'{src}@sensor_msgs/msg/{typ}[gz.msgs.{gztyp}')
                 remaps.append((src,f'/{r}/camera/{view}/{topic}'))
         actions.append(Node(package='ros_gz_bridge',executable='parameter_bridge',name='bridge_'+r,arguments=bridge_args,remappings=remaps))
