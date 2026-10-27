@@ -11,6 +11,7 @@ from pathlib import Path
 import random
 import secrets
 import time
+import threading
 
 import rclpy
 from geometry_msgs.msg import Twist
@@ -146,12 +147,31 @@ class Manager(Node):
             raise ValueError(f'person {ident} is not owned/active')
         return [ident]
 
+    def _gazebo_call(self,call):
+        # Gazebo create/remove services are synchronous. Hold owned people
+        # while the callback blocks and keep the watchdog informed only for
+        # this bounded service call; a hung manager elsewhere still times out.
+        self.stop_all()
+        finished=threading.Event()
+        def service_heartbeat():
+            while not finished.wait(0.2):
+                self.heartbeat_pub.publish(Empty())
+        heartbeat=threading.Thread(target=service_heartbeat,daemon=True)
+        heartbeat.start()
+        try:
+            return call()
+        finally:
+            finished.set()
+            heartbeat.join(timeout=0.5)
+
     def _spawn_one(self,ident,start,end,guest_mode=False,spawn_at=None,yaw=0.0):
         name=f'{self.prefix}{ident:02d}'
         if self.fresh_pose(name) is not None:
             raise ValueError(f'orphan / duplicate exists: {name}; use recover explicitly')
         origin=start if spawn_at is None else spawn_at
-        spawn(self.world,name,*origin,self.cfg['person_radius_m'],self.cfg['person_height_m'],yaw=yaw)
+        self._gazebo_call(lambda: spawn(
+            self.world,name,*origin,self.cfg['person_radius_m'],
+            self.cfg['person_height_m'],yaw=yaw))
         # A true service response means the request was accepted, NOT that the
         # world entity exists. Gazebo ground-truth confirmation is mandatory.
         deadline = time.monotonic() + 6.0
@@ -165,7 +185,7 @@ class Manager(Node):
         if confirmed is None or math.dist(confirmed, origin) > 0.4:
             # Clean up any late / misplaced entity; never register a ghost.
             try:
-                remove(self.world, name)
+                self._gazebo_call(lambda: remove(self.world, name))
             except Exception as exc:
                 self.get_logger().warning(f'Spawn cleanup could not remove {name}: {exc}')
             raise RuntimeError(
@@ -274,7 +294,7 @@ class Manager(Node):
             for i in range(1,9):
                 name=f'{self.prefix}{i:02d}'
                 if self.fresh_pose(name) is not None:
-                    remove(self.world,name)
+                    self._gazebo_call(lambda: remove(self.world,name))
                     self.record('recover_orphan',name=name)
             return
         if action in ('delete','cleanup'):
@@ -318,7 +338,7 @@ class Manager(Node):
     def delete_person(self,ident):
         w=self.people[ident]
         self.send_zero(ident)
-        remove(self.world,w.name)
+        self._gazebo_call(lambda: remove(self.world,w.name))
         self.record('delete',id=ident)
         del self.people[ident]
 
@@ -540,7 +560,25 @@ class Manager(Node):
 
     def _evade_override(self,ident,w,person,now,speed):
         try:
-            return evade_velocity(w.evade,person,w.start,w.end,speed,now)
+            plan=w.evade
+            velocity=evade_velocity(plan,person,w.start,w.end,speed,now)
+            if velocity==(0.0,0.0):
+                return velocity
+            previous=plan.setdefault('progress_xy',person)
+            progress_time=plan.setdefault('progress_s',now)
+            # A full control tick of motion must occur within the existing
+            # pose timeout. Stop pushing when a fixed obstacle blocks a move.
+            along=sum((person[i]-previous[i])*plan['dir'][i] for i in (0,1))
+            if along>=speed/self.cfg['control_rate_hz']:
+                plan['progress_xy']=person
+                plan['progress_s']=now
+            elif now-progress_time>=self.cfg['pose_timeout_s']:
+                self.record('encounter_blocked',id=ident,kind=w.encounter,
+                            x=round(person[0],3),y=round(person[1],3))
+                w.evade=None
+                w.yield_selected=True
+                return (0.0,0.0)
+            return velocity
         except Exception as exc:
             w.evade=None
             self.record('encounter_error',id=ident,kind=w.encounter,error=repr(exc))

@@ -2,6 +2,7 @@
 import json
 import re
 import subprocess
+from pathlib import Path
 
 NAME_RE = re.compile(r'^test_person_[0-9]{2}$')
 
@@ -10,6 +11,14 @@ def make_person_sdf(name, x, y, radius=0.22, height=1.55, yaw=0.0):
     if not NAME_RE.fullmatch(name):
         raise ValueError('invalid owned model name')
     yaw_text = '0' if yaw == 0 else f'{yaw:.9f}'
+    mesh = Path(__file__).resolve().parent / 'assets' / 'standing.dae'
+    # The cylinder remains the physical collision shape. The bundled humanoid
+    # visual allows the robot's camera detector to see a person in Gazebo.
+    visual_geometry = (
+        f'<mesh><uri>file://{mesh}</uri></mesh>' if mesh.is_file()
+        else f'<cylinder><radius>{radius:.4f}</radius><length>{height:.4f}</length></cylinder>'
+    )
+    visual_pose = '0 0 0.02 0.04 0 0' if mesh.is_file() else f'0 0 {height/2:.6f} 0 0 0'
     # A real cylinder collision at robot LiDAR height (0.30m).
     # VelocityControl is a Gazebo Harmonic system, not the robot safety controller.
     return f'''<?xml version="1.0"?>
@@ -28,9 +37,8 @@ def make_person_sdf(name, x, y, radius=0.22, height=1.55, yaw=0.0):
         <geometry><cylinder><radius>{radius:.4f}</radius><length>{height:.4f}</length></cylinder></geometry>
       </collision>
       <visual name="person_visual">
-        <pose>0 0 {height/2:.6f} 0 0 0</pose>
-        <geometry><cylinder><radius>{radius:.4f}</radius><length>{height:.4f}</length></cylinder></geometry>
-        <material><ambient>0.1 0.5 0.9 1</ambient><diffuse>0.1 0.5 0.9 1</diffuse></material>
+        <pose>{visual_pose}</pose>
+        <geometry>{visual_geometry}</geometry>
       </visual>
     </link>
     <plugin filename="gz-sim-velocity-control-system" name="gz::sim::systems::VelocityControl">

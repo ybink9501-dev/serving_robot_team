@@ -1,14 +1,14 @@
 # TEAM 두 로봇 통합 실행 및 검증
 
 기준 저장소: `hwanote/serving-robot-system`, 기준 커밋 `6d87bda`.
-작업 브랜치: `integration/team-dual-robot-20261022`. 원격 push는 수행하지 않는다.
+배포 저장소에서는 `team_project/` 아래에 전체 구조를 유지한다.
 
 ## 실행
 
 WSL Ubuntu에서 기존 팀 저장소로 이동한다.
 
 ```bash
-cd /home/user/team_serving_robot_clean_20261022
+cd team_project
 bash scripts/build.sh
 bash scripts/start_operation.sh
 ```
@@ -29,9 +29,7 @@ Python 파일을 변경하면 `--symlink-install` 사용 여부와 관계없이 
 ## 지도
 
 원본 `maps/stores/demo_store/`의 세 파일은 기존처럼 0바이트이며 덮어쓰지 않았다.
-LAB `cafe_clean_step96` 원본도 변경하지 않았다. 현재 운행 지도는 이 작업에서
-**원본 카페 월드의 실제 LiDAR → SLAM Toolbox → map_saver**로 저장한
-`_local_only/maps/lidar_initial.yaml`이다. SDF 충돌 형상으로 만든 지도가 아니다.
+LAB `cafe_clean_step96` 원본도 변경하지 않았다. 현재 운행 지도는 원본 카페 월드의 실제 LiDAR → SLAM Toolbox → map_saver로 저장한 `maps/stores/demo_store/team_lidar_initial.yaml`이다. SDF 충돌 형상으로 만든 지도가 아니다.
 첫 로봇 spawn에서 odom/map 원점은 0,0이고 world 위치는 -3.2,-2.25이므로
 현재 world → map 이동은 +3.2,+2.25, yaw 0이다. 지도 추정과 실제 위치의
 차이는 독립적으로 계측해야 하며, 이 변환 자체가 물리 도착 정확도를 보증하지 않는다.
@@ -47,8 +45,7 @@ bash scripts/save_map.sh cafe_new_scan
 Mapping에는 Robot 01과 SLAM만 실행하며 AMCL/Nav2 운행 스택은 함께 실행하지 않는다.
 현재 Mapping Launch는 센서 취득·지도 저장용이다. 안전한 지도 확장 주행 조작기는
 아직 연결하지 않았으므로 이 모드에서 base 토픽에 임의 속도를 발행하지 않는다.
-새 clone에는 `_local_only`가 포함되지 않으므로 유효한 SLAM 지도와 가중치를 별도로
-준비해야 한다. 가중치는 `bash scripts/fetch_models.sh`로 준비할 수 있다.
+새 clone에는 운행 지도가 포함된다. `_local_only`는 포함되지 않으므로 가중치를 별도로 준비해야 한다. 가중치는 `bash scripts/fetch_models.sh`로 준비할 수 있다.
 Python YOLO 의존성은 현재 WSL의 `ultralytics`/PyTorch 설치를 사용한다.
 
 ## 미션과 운영 API
@@ -108,6 +105,6 @@ Robot Base이다. 정밀 정렬도 Semantic Safety 입력으로만 들어간다.
 
 ## 아직 완료 판정하면 안 되는 항목
 
-현재 검증 결과는 `TEAM_VALIDATION_KO.md`에 기록한다. 지도 추정 도착과 Gazebo 실제
+검증 결과는 로컬 `_local_only/` 로그와 실제 시험 기록으로 확인한다. 지도 추정 도착과 Gazebo 실제
 위치 오차를 구분해야 한다. 모든 테이블·접근 방향·사람 보행·No-Go 진입 거절·
 반복 신뢰성 시험이 통과하기 전에는 전체 요구사항 완료로 선언하지 않는다.
