@@ -35,6 +35,8 @@ world_to_map:
   y: 2.25
   yaw: 0.0
 
+# Operation-only DiffDrive effective calibration; base.xacro physical wheel spacing remains 0.35 m.
+# Preserve this measured setting until a new Gazebo comparison justifies a change.
 diff_drive_effective_wheel_separation_m: 0.317
 localization_guard:
   enabled: true

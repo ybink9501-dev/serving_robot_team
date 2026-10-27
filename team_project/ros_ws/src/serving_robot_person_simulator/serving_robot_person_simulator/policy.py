@@ -1,6 +1,5 @@
 """Pure decision logic with no ROS/Gazebo imports. Deterministic per seed."""
 import math
-import random
 from dataclasses import dataclass, field
 
 

@@ -1,6 +1,5 @@
 """Two robot dispatcher: idempotent requests, state confirmation, traffic control, local web UI."""
 import json
-import os
 import time
 import math
 import sqlite3
@@ -23,7 +22,7 @@ from .runtime_config import load_limits
 from tf2_ros import Buffer,TransformListener
 from rclpy.time import Time
 import yaml
-from .policy import Task, FleetCore, ROBOT_IDS, ACTIVE, distance, may_confirm, ZoneArbiter, in_bounds
+from .policy import Task, FleetCore, ROBOT_IDS, distance, may_confirm, ZoneArbiter, in_bounds
 from .yield_policy import candidate_poses, assess_path, choose_yield
 
 

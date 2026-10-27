@@ -1,6 +1,5 @@
 """TEAM assets, independent TF and a single authoritative safety chain per base."""
 from pathlib import Path
-import math
 import xml.etree.ElementTree as ET
 import subprocess
 import xacro

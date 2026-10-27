@@ -4,7 +4,6 @@ Never interprets Nav2 command or odometry as ground truth. Reports absent GT exp
 import csv
 import json
 import math
-import os
 import time
 from pathlib import Path
 import rclpy

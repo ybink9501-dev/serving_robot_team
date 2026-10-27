@@ -1,5 +1,5 @@
 """Create/move/remove a real non-person Gazebo obstacle; never publish detections."""
-import argparse,subprocess,json,math,time
+import argparse,subprocess,json,time
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('action',choices=['spawn','move','clear']);p.add_argument('--name',default='moving_obstacle');p.add_argument('--x',type=float,default=-1.8);p.add_argument('--y',type=float,default=-2.25);p.add_argument('--to-x',type=float);p.add_argument('--to-y',type=float);p.add_argument('--duration',type=float,default=0.);p.add_argument('--radius',type=float,default=.2);a=p.parse_args()
 def service(name,typ,request):

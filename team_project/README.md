@@ -26,3 +26,9 @@ ros2 launch serving_robot_person_simulator people.launch.py config:=$PWD/ros_ws/
 `cafe_autonomy`의 기존 수동 사람 시험 도구 `scripts/person_scenario.py`와 독립형 `serving_robot_person_simulator`는 서로 다른 Gazebo 모델을 조작합니다. 동일 모델 이름을 동시에 사용하지 마세요.
 
 자세한 운영 절차는 [`TEAM_RUNBOOK_KO.md`](TEAM_RUNBOOK_KO.md)를 참고하세요. 새로운 컴퓨터에서는 ROS/Gazebo와 Python 의존성을 설치해야 합니다. 이번 업로드용 클론에서는 8개 ROS 패키지 빌드와 92개 오프라인 테스트가 통과했고, Robot 01의 센서·TF·Nav2·Collision Monitor 기동을 확인했습니다. 발표 준비 요청에 따라 실제 목표 주행 시험은 중단했으므로 새 클론의 전체 서빙 성공으로 기록하지 않습니다.
+
+## 집 컴퓨터로 가져오기
+
+전체 Git 이력이 필요하지 않다면 `git clone --depth 1`로 내려받을 수 있습니다. 현재 Git에 포함된 사람 시각 메시(약 4.4MB)는 카메라 검출 시험에 필요하므로 유지합니다. `ros_ws/build`, `ros_ws/install`, `ros_ws/log`, `_local_only`는 Git에서 제외되며 새 컴퓨터에서 빌드·모델 다운로드 시 다시 생성됩니다.
+
+현재 통합 실행 진입점은 `scripts/start_operation.sh`입니다. `serving_robot_navigation`의 옛 LAB 전용 Launch와 `check_safety_timeout.py`에는 `team_robot_lab` 경로가 남아 있어 이 진입점에서 사용하지 않습니다. 팀 원본 자료로 보존했으며 집 컴퓨터의 통합 실행 명령으로 사용하지 마세요.

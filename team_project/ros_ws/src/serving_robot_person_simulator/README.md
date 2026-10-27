@@ -1,140 +1,38 @@
-# Isolated dynamic people simulator — ROS 2 Jazzy + Gazebo Harmonic
+# 사람 시뮬레이터
 
-## Status
+Robot 01·02와 독립적으로 실행하는 Gazebo 시험 도구입니다. 사람 모델을 생성·이동·정지·삭제하고, 사람 간 거리 유지와 선택적 교착 해소를 수행합니다. 로봇 Nav2, Safety, TF 또는 로봇 속도 명령을 직접 제어하지 않습니다.
 
-Version 0.1.0. **Package code and offline policy tests completed; not yet
-live-validated in the user's current cafe.world.sdf.** No real positions are
-invented. The `lanes: []` setting deliberately disables spawn until the map is
-inspected and **up to 8 straight pedestrian lanes with checked clearance** are
-entered. Requires the robot model's pose to appear in `/world/cafe/pose/info`.
+## 실행
 
-Unlike the old `cafe_person_scenarios.py`, this package never uses raw `/odom`
-for global location, never publishes robot `/cmd_vel`, and does not require
-modifying the robot Nav2, Semantic Safety, or Collision Monitor configs.
-
-## Files
-
-- `config/policy.yaml`: world ID, approved lanes, 1..8 slots, probabilistic behavior.
-- `serving_robot_person_simulator/policy.py`: pure random scenario logic.
-- `serving_robot_person_simulator/gazebo_api.py`: on-demand Gazebo create/remove.
-- `serving_robot_person_simulator/manager.py`: ROS manager, status, commands, log.
-- `launch/people.launch.py`: people bridge, independent heartbeat watchdog, and manager; can be
-  launched/stopped independently of existing Gazebo/robot/safety launches.
-- `tests/test_policy.py`: no ROS/Gazebo needed; validates distributions and guards.
-
-## Setup
-
-Download the ZIP into Windows Downloads, then under WSL:
+통합 프로젝트의 team_project 디렉터리에서 ROS 2 Jazzy와 Gazebo Harmonic을 준비합니다. 로봇 통합 실행과 같은 ROS_DOMAIN_ID 및 GZ_PARTITION을 사용합니다.
 
 ```bash
-unzip -n /mnt/c/Users/user/Downloads/serving_robot_person_simulator.zip \
-  -d ~/team_robot_lab/ros_ws/src/
-cd ~/team_robot_lab/ros_ws
 source /opt/ros/jazzy/setup.bash
-python3 -m unittest discover -s src/serving_robot_person_simulator/tests -v
-colcon build --symlink-install --packages-select serving_robot_person_simulator
-source install/local_setup.bash
-```
-
-Adjust Windows Downloads path if needed. Team original repo is NOT modified.
-
-### Before spawning people
-
-1. Verify `gz service -l` has `/world/cafe/create` and `/world/cafe/remove`.
-2. Verify Gazebo advertises `/world/cafe/pose/info`.
-3. Verify TFMessage bridge really reports `robot_01` and later `test_person_XX`
-   as `child_frame_id` (no unsupported assumptions about model or link names).
-4. Read current cafe.world.sdf and approve pedestrian straight lanes that do
-   not cross furniture or clip the robot's starting footprint.
-5. Add 1..8 lane entries to **a copy** of `config/policy.yaml` in the lab (example
-   syntax is commented in the default YAML). No default spawn points exist.
-6. For robot motion, keep the existing person's sensory stale-stop logic. This
-   simulator **does not fake a PersonSafetyEvent** or weaken the robot's safety.
-
-Launch in a SEPARATE terminal (Gazebo, robot, Safety already running):
-
-```bash
-export ROS_DOMAIN_ID=99
-export GZ_PARTITION=team_robot_lab_gazebo_99
-source /opt/ros/jazzy/setup.bash
-source ~/team_robot_lab/ros_ws/install/local_setup.bash
+source ros_ws/install/setup.bash
+export ROS_DOMAIN_ID=101 GZ_PARTITION=team_integration_101
 ros2 launch serving_robot_person_simulator people.launch.py \
-  config:=/home/user/team_robot_lab/person_policy_active.yaml
+  config:=$PWD/ros_ws/src/serving_robot_person_simulator/config/policy_dual.yaml
 ```
 
-The manager starts **with no people and no motion**. If `robot_pose_valid:false`
-in the status JSON, DO NOT spawn: check bridge/world frame labels first.
+policy.yaml은 Robot 01 단독, policy_dual.yaml은 Robot 01·02 위치를 함께 확인합니다. 기본 robot_encounter:=yield는 기존 양보 정책입니다. 혼합 행동 시험은 robot_encounter:=mixed를 명시하며 기다리기·막기·차선 내 후진·측면 피하기를 각 25%로 선택합니다. 사람의 후진은 로봇 후진 금지와 별개입니다. 선택적 사람 간 교착 해소는 deadlock_resolution:=true로 켭니다. 기본값은 꺼짐입니다.
 
-### Command interface
+## 명령과 설정
 
-Topic: `/person_simulator/command` (`std_msgs/msg/String` JSON). Example:
+명령은 /person_simulator/command 토픽의 std_msgs/msg/String에 JSON으로 전달합니다. 상태는 /person_simulator/status에서 확인합니다.
 
-```bash
-ros2 topic pub --once /person_simulator/command std_msgs/msg/String \
-  '{data: "{\"action\":\"status\"}"}'
-# Configure and approve lanes before using spawn:
-ros2 topic pub --once /person_simulator/command std_msgs/msg/String \
-  '{data: "{\"action\":\"spawn\",\"count\":2}"}'
-ros2 topic pub --once /person_simulator/command std_msgs/msg/String \
-  '{data: "{\"action\":\"start\"}"}'
-ros2 topic pub --once /person_simulator/command std_msgs/msg/String \
-  '{data: "{\"action\":\"stop\",\"id\":1}"}'
-ros2 topic pub --once /person_simulator/command std_msgs/msg/String \
-  '{data: "{\"action\":\"resume\",\"id\":1}"}'
-ros2 topic pub --once /person_simulator/command std_msgs/msg/String \
-  '{data: "{\"action\":\"delete\",\"id\":1}"}'
-ros2 topic pub --once /person_simulator/command std_msgs/msg/String \
-  '{data: "{\"action\":\"cleanup\"}"}'
-```
+- spawn: normal 모드는 1~3명, test 모드는 1~8명 순차 생성, legacy는 기존 방식입니다.
+- test 모드는 config/policy.yaml의 단일 스폰 위치에서 한 명씩 생성합니다. 이전 사람이 1.00m 이상 벗어날 때까지 최대 60초 기다립니다.
+- start, stop, resume, delete, cleanup, status, shutdown, recover를 지원합니다.
+- sudden_stop, long_block, guest_cycle은 수동 시험 명령입니다. guest_cycle은 normal 모드의 2번 사람에게 적용합니다.
+- 기존 속도·정지 확률·시간은 config/policy.yaml에 보존됩니다.
 
-Other commands: `pause` (all), `unpause` (all), `shutdown` (manager exit +
-delete own people), `recover` (explicit orphan cleanup *only* while no
-currently-owned people). Missing id applies to all currently-owned people.
+## 파일 역할과 제한
 
-Monitor:
+- manager.py: ROS 명령·상태·사람별 제어 및 Gazebo 서비스 호출
+- policy.py: 확률·거리·교착·혼합 행동 판단
+- gazebo_api.py: 사람 모델 생성·삭제
+- pose_cli.py: Gazebo 실제 모델 위치 수집
+- watchdog.py: manager heartbeat 중단 시 사람 속도 정지
+- gazebo_person_event_bridge.py: 별도 LAB 시험용 브리지이며 통합 Launch에서 실행하지 않습니다.
 
-```bash
-ros2 topic echo /person_simulator/status
-```
-
-If you choose `seed: null` the manager generates and logs one random seed per
-run; choose an integer seed for reproducing draws. JSONL logs live in
-`~/.ros/person_simulator/run_*.jsonl`.
-
-### Probability semantics
-
-- At the beginning of each lane traversal and after a stop, draw speed:
-  slow 20% (0.08m/s), normal 60% (0.15m/s), fast 20% (0.22m/s).
-- At first close approach to robot, draw yield 80% or non-yield 20%, cached for
-  encounter; both obey unconditional proximity stop.
-- At **random decision events spaced 8..16 simulated seconds apart** draw:
-  continue 72%, gradual stop 22%, sudden stop 2%, long block 4%.
-- `gradual_stop`: reduce speed for 1.0..2.2s, then wait 1.5..4.0s.
-- `sudden_stop`: immediate zero speed and wait 0.7..2.0s (rare).
-- `long_block`: pause 16..36s ONLY if current position is near the explicitly
-  configured `blockage_corridor` centerline. This creates **a candidate** for
-  path obstruction; the real Robot/Nav2 path must determine actual blockage.
-- No per-frame probability draws. Never interpret event probabilities as a
-  proportion of time spent stationary. No scripted artificial event fed into
-  the real semantic person detector.
-
-### Limitations and risk
-
-- Kinematic cylinders are placeholders for pedestrian collision shape; their
-  translation uses Gazebo VelocityControl in the world frame. **Verify with
-  one person first** (GT motion, scan echo, physics interaction). Real walking
-  animation is not implemented.
-- A separately launched ROS watchdog publishes person-only zeros after 0.8s
-  without a manager heartbeat. This handles a manager-only crash while the ROS
-  bridge remains alive. **Simultaneous bridge/watchdog crashes, OS kill, or network
-  failures are NOT guaranteed safe**, since Gazebo VelocityControl may retain
-  the last nonzero command. On abnormal failure, pause Gazebo if necessary,
-  restart people launch, then `recover` owned orphan models explicitly.
-- Without confirmed model GT, all people motion is forced to zero. No LiDAR
-  detection, robot autonomous navigation, or 2.5m team metric is claimed proven.
-- Lane safety is a precondition; the module checks robot/person distances but
-  **cannot infer furniture geometry** from pose messages alone.
-- Stop and removal are separate: a stopped person remains a physical LiDAR
-  obstacle; deleting removes the model from Gazebo.
-- `gz service` may report true before the model appears in GT; status is the
-  authoritative runtime observation. Verify absence after removal.
+모델 시각 메시는 assets/standing.dae이고 원통 충돌 형상은 유지됩니다. 설정된 차선이나 스폰 위치가 가구와 겹치면 이동이 정지하거나 생성이 실패할 수 있습니다. 사람 모델 생성과 로봇의 인식·안전 반응은 각각 Gazebo 통합 시험으로 확인해야 합니다.

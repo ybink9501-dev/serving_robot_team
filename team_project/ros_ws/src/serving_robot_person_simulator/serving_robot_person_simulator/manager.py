@@ -30,7 +30,6 @@ def xy(transform):
     return (transform.transform.translation.x, transform.transform.translation.y)
 
 
-from .policy import can_escape_person_hold
 
 class Manager(Node):
     def __init__(self):

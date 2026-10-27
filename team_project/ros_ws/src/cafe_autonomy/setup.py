@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from glob import glob
 from pathlib import Path
 
 package_name = 'cafe_autonomy'
@@ -9,7 +8,6 @@ files = [('share/ament_index/resource_index/packages', ['resource/' + package_na
 for group in ('launch', 'config', 'models', 'worlds', 'maps', 'web'):
     contents = [str(p) for p in Path(group).rglob('*') if p.is_file()]
     if contents:
-        
         for directory in sorted(set(str(p.parent) for p in map(Path,contents))):
             files.append((share + '/' + directory, [n for n in contents if str(Path(n).parent)==directory]))
 setup(name=package_name, version='1.0.0', packages=find_packages(),

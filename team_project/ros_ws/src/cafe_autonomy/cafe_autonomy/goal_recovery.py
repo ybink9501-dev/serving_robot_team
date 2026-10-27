@@ -6,7 +6,6 @@ from unique_identifier_msgs.msg import UUID
 from action_msgs.msg import GoalStatus,GoalStatusArray
 from action_msgs.srv import CancelGoal
 from nav2_msgs.action import NavigateToPose,FollowPath
-from std_msgs.msg import String
 
 class RemoteGoal:
     def __init__(self,owner,goal_id,kind):self.owner=owner;self.goal_id=goal_id;self.accepted=True;self.kind=kind
