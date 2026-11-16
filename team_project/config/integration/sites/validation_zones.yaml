@@ -1,0 +1,22 @@
+zones:
+  central_lane:
+  - 2.8
+  - 5.2
+  - 1.45
+  - 2.55
+  kitchen_access:
+  - 0.1
+  - 2.0
+  - 3.5
+  - 4.5
+no_go: {}
+slow: {}
+retreat:
+  robot_01:
+    x: 0.0
+    y: 0.0
+    yaw: 0.0
+  robot_02:
+    x: 8.0
+    y: 0.0
+    yaw: 3.141592653589793

@@ -20,7 +20,7 @@ import threading
 from .util import now_iso
 
 ENTITY_TYPES = ('table', 'counter', 'kitchen', 'robot_wait')
-ZONE_TYPES = ('exclusive', 'no_go', 'slow')
+ZONE_TYPES = ('exclusive', 'no_go', 'slow', 'operating')
 ID_RE = re.compile(r'^[a-z][a-z0-9_]*$')
 MAX_ITEMS = 1000
 LABEL_KIND = {'table': 'table', 'kitchen': 'pickup', 'counter': 'pickup', 'robot_wait': 'standby'}

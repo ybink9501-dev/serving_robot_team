@@ -13,6 +13,7 @@ const ADD_TOOLS: { type: EntityType; label: string }[] = [
 ]
 
 const ZONE_TOOLS: { type: ZoneType; label: string }[] = [
+  { type: 'operating', label: '운영 구역' },
   { type: 'exclusive', label: 'Exclusive Zone' },
   { type: 'no_go', label: 'No-Go Zone' },
   { type: 'slow', label: 'Slow Zone' },

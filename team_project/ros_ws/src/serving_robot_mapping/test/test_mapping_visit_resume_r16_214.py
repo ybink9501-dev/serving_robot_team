@@ -72,3 +72,14 @@ def test_unknown_at_prior_goal_blocks_resume(tmp_path):
             report, data,
             30, 30, 0.1, 0.0, 0.0, 0.0,
         )
+
+
+def test_checkpoint_chain_preserves_old_visits_even_without_new_movement(tmp_path):
+    import hashlib
+    first=tmp_path/'first';second=tmp_path/'second';first.mkdir();second.mkdir()
+    report=make_report(first);current=make_report(second)
+    (second/'R16-147_exploration.log').write_text('Only in-place observation, no navigation')
+    (second/'mapping_observation_resume.json').write_text(json.dumps(dict(source_report=str(report),source_sha256=hashlib.sha256(report.read_bytes()).hexdigest())))
+    assert restore_visits(current,[0]*900,30,30,.1,0.,0.,0.)==[(.8,.9),(1.5,1.6)]
+    report.write_text('{}')
+    with pytest.raises(ValueError,match='changed'):restore_visits(current,[0]*900,30,30,.1,0.,0.,0.)

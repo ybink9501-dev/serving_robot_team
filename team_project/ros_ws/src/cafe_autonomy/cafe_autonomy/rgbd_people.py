@@ -6,6 +6,7 @@ import json, math, time, threading
 from collections import deque
 from pathlib import Path
 import numpy as np
+from .rgbd_projection import torso_position
 import cv2
 import rclpy
 from rclpy.node import Node
@@ -23,14 +24,20 @@ class Detector(Node):
         self.robot=self.declare_parameter('robot_id','robot_01').value
         weights=self.declare_parameter('weights','').value
         self.timeout=self.declare_parameter('timeout_s',3.0).value
+        self.confidence=float(self.declare_parameter('confidence',.65).value)
+        if not 0.<self.confidence<1.:raise ValueError('Invalid detector confidence')
         if not Path(weights).is_file():raise FileNotFoundError('YOLO weights missing: '+weights)
         from ultralytics import YOLO
         import torch
         torch.set_num_threads(1);torch.set_num_interop_threads(1);cv2.setNumThreads(1)
+        requested = self.declare_parameter('device', 'auto').value
+        self.device = ('cuda:0' if torch.cuda.is_available() else 'cpu') if requested == 'auto' else requested
+        self.get_logger().info('YOLO inference device: ' + str(self.device))
         self.model=YOLO(weights);self.tf=Buffer();self.listener=TransformListener(self.tf,self)
         self.frames={};self.depth={};self.info={};self.results={};self.lock=threading.Lock();self.running=True
         self.subs=[];self.views=('front','rear_left','rear_right')
         self.out=self.create_publisher(PoseArray,'people_detected',10)
+        self.candidates_out=self.create_publisher(PoseArray,'people_candidates',10)
         self.health=self.create_publisher(String,'perception_status',10)
         for view in self.views:
             base=f'/{self.robot}/camera/{view}/'
@@ -73,28 +80,24 @@ class Detector(Node):
                 time.sleep(.02);continue
             try:
                 images=[self.image(rgb) for _,rgb,_,_,_ in jobs]
-                outputs=self.model.predict(images,classes=[0],conf=.4,imgsz=640,device='cpu',verbose=False)
+                outputs=self.model.predict(images,classes=[0],conf=min(.4,self.confidence),imgsz=640,device=self.device,verbose=False)
                 for (v,rgb,dep,received,info),out in zip(jobs,outputs):
                     depth=self.image(dep).astype(np.float32)
                     if dep.encoding=='16UC1':depth*=.001
-                    if depth.shape!=images[0].shape[:2]:raise ValueError('RGB and depth are not registered')
-                    detections=[]
+                    if depth.shape!=(rgb.height,rgb.width):raise ValueError('RGB and depth are not registered')
+                    detections=[];candidates=[]
                     for box in out.boxes:
                         x1,y1,x2,y2=map(int,box.xyxy[0].tolist());h,w=depth.shape
                         x1,x2=max(0,x1),min(w,x2);y1,y2=max(0,y1),min(h,y2)
-                        roi=depth[y1:y2,x1:x2];valid=roi[np.isfinite(roi)&(roi>.1)&(roi<8.)]
-                        if not valid.size:raise ValueError('Person has no usable depth')
-                        d=float(np.percentile(valid,25));u=(x1+x2)/2;vv=(y1+y2)/2
-                        # Gazebo camera_link: x forward, y left, z up. Intrinsics use optical convention.
-                        q=np.array([d,-(u-info.k[2])*d/info.k[0],-(vv-info.k[5])*d/info.k[4]])
                         try:
                             tf=self.tf.lookup_transform('map',self.robot+'/camera_'+v+'_link',Time.from_msg(rgb.header.stamp))
                         except TransformException:
                             tf=self.tf.lookup_transform('map',self.robot+'/'+v+'_camera_link',Time.from_msg(rgb.header.stamp))
-                        rot=tf.transform.rotation;xyz=np.array([rot.x,rot.y,rot.z]);qw=rot.w
-                        q=q+2*np.cross(xyz,np.cross(xyz,q)+qw*q)
-                        tr=tf.transform.translation;detections.append([q[0]+tr.x,q[1]+tr.y,q[2]+tr.z])
-                    with self.lock:self.results[v]={'received':received,'detections':detections,'error':None}
+                        rot=tf.transform.rotation;tr=tf.transform.translation
+                        point=torso_position(depth,(x1,y1,x2,y2),info.k,
+                            [rot.x,rot.y,rot.z,rot.w],[tr.x,tr.y,tr.z])
+                        (detections if float(box.conf[0])>=self.confidence else candidates).append(point.tolist())
+                    with self.lock:self.results[v]={'received':received,'detections':detections,'candidates':candidates,'error':None}
             except Exception as exc:
                 with self.lock:
                     for v,*_ in jobs:self.results[v]={'received':0.,'detections':[],'error':str(exc)}
@@ -105,14 +108,20 @@ class Detector(Node):
         with self.lock:result=dict(self.results)
         fresh=all(v in result and now-result[v]['received']<self.timeout and result[v]['error'] is None for v in self.views)
         msg=PoseArray();msg.header.frame_id='map';msg.header.stamp=self.get_clock().now().to_msg()
-        points=[]
+        points=[];candidate_points=[]
         if fresh:
             for view in result.values():
                 for p in view['detections']:
                     if any(math.hypot(p[0]-q[0],p[1]-q[1])<.35 for q in points):continue
                     points.append(p);pose=Pose();pose.position.x=float(p[0]);pose.position.y=float(p[1]);pose.position.z=float(p[2]);pose.orientation.w=1.;msg.poses.append(pose)
+                for p in view.get('candidates',[]):
+                    if not any(math.hypot(p[0]-q[0],p[1]-q[1])<.35 for q in candidate_points):candidate_points.append(p)
             self.out.publish(msg)
-        self.health.publish(String(data=json.dumps({'fresh':fresh,'detector':'YOLO_RGBD','count':len(points),'views':result})))
+            candidates_msg=PoseArray();candidates_msg.header=msg.header
+            for p in candidate_points:
+                pose=Pose();pose.position.x=float(p[0]);pose.position.y=float(p[1]);pose.position.z=float(p[2]);pose.orientation.w=1.;candidates_msg.poses.append(pose)
+            self.candidates_out.publish(candidates_msg)
+        self.health.publish(String(data=json.dumps({'fresh':fresh,'detector':'YOLO_RGBD','count':len(points),'candidate_count':len(candidate_points),'views':result})))
 
 def main():
     rclpy.init();node=Detector()

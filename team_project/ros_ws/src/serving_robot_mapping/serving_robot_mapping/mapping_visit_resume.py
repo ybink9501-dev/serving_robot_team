@@ -1,6 +1,7 @@
 """Restore successful visits within a compatible live SLAM map."""
 
 import json
+import hashlib
 import math
 import re
 from pathlib import Path
@@ -51,6 +52,7 @@ def restore_visits(
     origin_x,
     origin_y,
     origin_yaw,
+    _seen=None,
 ):
     """Fail closed if historical goals do not fit the live map.
 
@@ -58,6 +60,9 @@ def restore_visits(
     use it only when explicitly resuming the same live session.
     """
     path = Path(report_file).resolve()
+    seen=set() if _seen is None else set(_seen)
+    if str(path) in seen or len(seen)>20:raise ValueError('Invalid visit resume chain')
+    seen.add(str(path))
     report = json.loads(path.read_text(encoding="utf-8"))
 
     if (
@@ -92,6 +97,15 @@ def restore_visits(
     visits = successful_visits(
         log.read_text(encoding="utf-8", errors="replace")
     )
+
+    # Preserve the actual successful goals from earlier checkpoints too.
+    # Geometry/free-space validation below applies to the combined history.
+    seed=path.parent/'mapping_observation_resume.json'
+    if seed.exists():
+        provenance=json.loads(seed.read_text());source=Path(provenance['source_report'])
+        if hashlib.sha256(source.read_bytes()).hexdigest()!=provenance['source_sha256']:
+            raise ValueError('Visit source report changed')
+        visits=(restore_visits(source,data,width,height,resolution,origin_x,origin_y,origin_yaw,seen)+visits)[-200:]
 
     if not visits:
         raise ValueError("No independently logged successful goals")

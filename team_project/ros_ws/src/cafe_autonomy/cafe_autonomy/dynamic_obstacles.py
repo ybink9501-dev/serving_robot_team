@@ -1,3 +1,4 @@
+from .rgbd_projection import conservative_person_geometry, lidar_corroborates_person
 """RGB-D person + LiDAR foreground tracking and predictive safety adapter.
 
 Uses immutable SLAM occupancy to reject known furniture/walls. Never consumes
@@ -9,6 +10,7 @@ from pathlib import Path
 from collections import deque
 import numpy as np
 import cv2
+from .occupancy_registration import register_occupancy, occupancy_tree
 import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
@@ -20,12 +22,30 @@ from nav_msgs.msg import OccupancyGrid,Path as NavPath,Odometry
 from std_msgs.msg import String,Header
 from ros_gz_interfaces.msg import Contacts
 from tf2_ros import Buffer,TransformListener
-from .dynamic_policy import DynamicPolicy,distance,path_blocks
+from .dynamic_policy import DynamicPolicy,distance,path_blocks, obstacle_samples, navigation_envelope_radius
 from .runtime_config import load_limits
 from .static_reference import register_static,closest,static_echo
 
 
 def yaw(q):return math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))
+
+
+def foreground_clusters(points, beam_indices, max_gap, minimum_points):
+    """Do not join returns across invalid or removed static LiDAR beams."""
+    groups = []
+    current = []
+    previous_index = None
+    for point, index in zip(points, beam_indices):
+        separated = (previous_index is not None and index != previous_index + 1)
+        if current and (separated or np.linalg.norm(point-current[-1]) > max_gap):
+            if len(current) >= minimum_points:
+                groups.append(np.array(current))
+            current = []
+        current.append(point)
+        previous_index = index
+    if len(current) >= minimum_points:
+        groups.append(np.array(current))
+    return groups
 
 
 class DynamicObstacles(Node):
@@ -36,10 +56,11 @@ class DynamicObstacles(Node):
         self.cfg=limits['dynamic_obstacles'];self.engine=DynamicPolicy(self.cfg)
         self.tf=Buffer();self.listener=TransformListener(self.tf,self)
         self.static_shapes=[]
+        self.static_lidar_height=self.declare_parameter('static_lidar_height_m',0.30).value
         world=self.declare_parameter('static_world_file','').value
         self.alignment=[self.declare_parameter('alignment_'+k,0.).value for k in ('x','y','yaw')]
         if world:self.load_static_world(world)
-        self.grid=None;self.map_meta=None;self.people=[];self.people_wall=0.;self.perception_fresh=False;self.perception_wall=0.
+        self.grid=None;self.map_meta=None;self.people=[];self.people_wall=0.;self.person_candidates=[];self.candidates_wall=0.;self.corroborated_people_count=0;self.perception_fresh=False;self.perception_wall=0.
         self.scan_wall=0.;self.contact_wall={i:0. for i in range(3)};self.contact_pairs={i:set() for i in range(3)};self.front_clear=0.;self.scan=None;self.scan_pose=None
         self.active=False;self.path=[];self.path_history=deque();self.target=None;self.cmd=0.;self.angular_cmd=0.;self.odom_speed=0.;self.last_leg=None
         self.last_pose=None;self.last_observe=-1e9
@@ -50,6 +71,7 @@ class DynamicObstacles(Node):
         self.create_subscription(OccupancyGrid,'map',self.on_map,map_qos)
         self.create_subscription(LaserScan,'scan',self.on_scan,qos_profile_sensor_data)
         self.create_subscription(PoseArray,'people_detected',self.on_people,10)
+        self.create_subscription(PoseArray,'people_candidates',self.on_person_candidates,10)
         self.create_subscription(String,'perception_status',self.on_perception,10)
         self.create_subscription(NavPath,'plan',self.on_path,10)
         self.create_subscription(String,'serving/status',self.on_mission,10)
@@ -75,8 +97,17 @@ class DynamicObstacles(Node):
                     if geom is None:continue
                     if geom.find('box') is not None:
                         size=list(map(float,geom.findtext('box/size').split()));shape=('box',size[0]/2,size[1]/2)
-                    elif geom.find('cylinder') is not None:shape=('circle',float(geom.findtext('cylinder/radius')),0.)
+                        half_height=size[2]/2
+                    elif geom.find('cylinder') is not None:
+                        shape=('circle',float(geom.findtext('cylinder/radius')),0.)
+                        half_height=float(geom.findtext('cylinder/length'))/2
                     else:continue
+                    # GPU LiDAR returns a horizontal slice, not a top-down
+                    # furniture footprint. Table tops above the scanner bias
+                    # registration toward surfaces that cannot produce its rays.
+                    height=getattr(self,'static_lidar_height',0.30)
+                    if not at[2]-half_height <= height <= at[2]+half_height:
+                        continue
                     self.static_shapes.append((at[0],at[1],at[5],*shape))
 
     def on_map(self,msg):
@@ -84,10 +115,15 @@ class DynamicObstacles(Node):
         self.grid=np.array(msg.data,dtype=np.int16).reshape(msg.info.height,msg.info.width)
         self.distance_field=cv2.distanceTransform((self.grid<65).astype(np.uint8),cv2.DIST_L2,3)*msg.info.resolution
         self.map_meta=msg.info
+        self.occupancy_reference=occupancy_tree(self.grid,msg.info)
     def on_people(self,msg):
         if msg.header.frame_id!='map':return
         self.people=[(p.position.x,p.position.y) for p in msg.poses if math.isfinite(p.position.x) and math.isfinite(p.position.y)]
         self.people_wall=time.monotonic()
+    def on_person_candidates(self,msg):
+        if msg.header.frame_id!='map':return
+        self.person_candidates=[(p.position.x,p.position.y) for p in msg.poses if math.isfinite(p.position.x) and math.isfinite(p.position.y)]
+        self.candidates_wall=time.monotonic()
     def on_perception(self,msg):
         try:self.perception_fresh=json.loads(msg.data).get('fresh') is True;self.perception_wall=time.monotonic()
         except ValueError:self.perception_fresh=False
@@ -126,14 +162,29 @@ class DynamicObstacles(Node):
         except (ValueError,TypeError):pass
     def pose(self,frame,stamp=None):
         t=self.tf.lookup_transform('map',frame,stamp or Time())
-        return t.transform.translation.x,t.transform.translation.y,yaw(t.transform.rotation)
+        if stamp is None:
+            age=self.get_clock().now().nanoseconds*1e-9-(t.header.stamp.sec+t.header.stamp.nanosec*1e-9)
+            if abs(age)>self.cfg['source_timeout_s']:raise ValueError('Stale transform '+frame)
+        result=(t.transform.translation.x,t.transform.translation.y,yaw(t.transform.rotation))
+        if not all(math.isfinite(v) for v in result):raise ValueError('Non-finite transform '+frame)
+        return result
     def static_points(self,x,y):
         info=self.map_meta;a=yaw(info.origin.orientation);dx=x-info.origin.position.x;dy=y-info.origin.position.y
-        ix=((dx*math.cos(a)+dy*math.sin(a))/info.resolution).astype(int)
-        iy=((-dx*math.sin(a)+dy*math.cos(a))/info.resolution).astype(int)
+        ix=np.floor((dx*math.cos(a)+dy*math.sin(a))/info.resolution).astype(int)
+        iy=np.floor((-dx*math.sin(a)+dy*math.cos(a))/info.resolution).astype(int)
         valid=(ix>=0)&(iy>=0)&(ix<info.width)&(iy<info.height)
         result=np.zeros(len(x),dtype=bool)
         result[valid]=self.distance_field[iy[valid],ix[valid]]<=self.cfg['static_match_margin_m']
+        if not self.static_shapes:
+            points=np.column_stack((x,y))
+            tree=getattr(self,'occupancy_reference',None)
+            aligned,self.static_alignment=register_occupancy(points,tree,
+                self.cfg.get('static_registration_shift_m',.4),
+                self.cfg.get('static_registration_yaw_rad',.2),
+                self.cfg.get('static_registration_match_m',.6))
+            if tree is not None and self.static_alignment.get('accepted'):
+                result|=tree.query(aligned)[0]<=self.cfg['static_match_margin_m']
+            return result
         ax,ay,aa=self.alignment;dx=x-ax;dy=y-ay
         wx=dx*math.cos(aa)+dy*math.sin(aa);wy=-dx*math.sin(aa)+dy*math.cos(aa)
         world_points=np.column_stack((wx,wy))
@@ -168,16 +219,11 @@ class DynamicObstacles(Node):
                 p=self.pose(r+'/base_footprint')
                 if distance(robot,p)<=self.cfg['recognition_m']:
                     foreground&=(x-p[0])**2+(y-p[1])**2>self.cfg['peer_exclusion_radius_m']**2
-                    peer.append((p[0],p[1],self.cfg['robot_radius_m'],'robot'))
+                    peer.append((p[0],p[1],self.cfg['robot_radius_m'],'robot',r))
             except Exception:pass
         points=np.stack((x[foreground],y[foreground]),axis=1) if np.any(foreground) else np.empty((0,2))
-        groups=[];current=[]
-        for point in points:
-            if current and np.linalg.norm(point-current[-1])>self.cfg['cluster_gap_m']:
-                if len(current)>=self.cfg['cluster_min_points']:groups.append(np.array(current))
-                current=[]
-            current.append(point)
-        if len(current)>=self.cfg['cluster_min_points']:groups.append(np.array(current))
+        groups=foreground_clusters(points,indices[foreground],
+                                   self.cfg['cluster_gap_m'],self.cfg['cluster_min_points'])
         people=[]
         if time.monotonic()-self.people_wall<self.cfg['person_timeout_s']:
             for px,py in self.people:
@@ -185,9 +231,10 @@ class DynamicObstacles(Node):
                 if 0.<d<=self.cfg['recognition_m']:
                     radius=self.cfg['person_radius_m']
                     people.append((px+(px-robot[0])*radius/d,py+(py-robot[1])*radius/d,radius,'person'))
-        objects=[]
+        objects=[];self.corroborated_people_count=0
         for group in groups:
             centre=np.mean(group,axis=0);radius=float(np.max(np.linalg.norm(group-centre,axis=1)))
+            body_fitted=False
             if len(group)>=5:
                 # Fit circular visible arcs (people/cylinders); the mean of a near
                 # surface alone underestimates both body position and radius.
@@ -199,9 +246,19 @@ class DynamicObstacles(Node):
                     fitted=math.sqrt(square);candidate=centre+fit[:2]
                     residual=float(np.max(np.abs(np.linalg.norm(group-candidate,axis=1)-fitted)))
                     if self.cfg['minimum_object_radius_m']<=fitted<=self.cfg['cluster_max_radius_m'] and residual<self.cfg['circle_fit_residual_m']:
-                        centre=candidate;radius=fitted
+                        centre=candidate;radius=fitted;body_fitted=True
             if radius>self.cfg['cluster_max_radius_m']:continue
-            if any(distance(centre,p)<self.cfg['person_lidar_merge_m']+p[2] for p in people):continue
+            matches=[i for i,p in enumerate(people) if distance(centre,p)<self.cfg['person_lidar_merge_m']+p[2]]
+            if matches and radius<=self.cfg['person_radius_m']*1.6:
+                index=min(matches,key=lambda i:distance(centre,people[i]))
+                people[index]=conservative_person_geometry(people[index],centre,radius,robot,self.cfg['person_radius_m'])
+                continue
+            if (time.monotonic()-self.candidates_wall<self.cfg['person_timeout_s']
+                    and getattr(self,'static_alignment',{}).get('accepted')
+                    and any(lidar_corroborates_person(p,centre,radius,body_fitted,len(group),self.cfg['person_lidar_merge_m']) for p in self.person_candidates)):
+                people.append((float(centre[0]),float(centre[1]),max(radius,self.cfg['person_radius_m']),'person'))
+                self.corroborated_people_count+=1
+                continue
             known_people=[tr for tr in self.engine.tracks.items.values() if tr.label=='person' and distance(centre,(tr.x,tr.y))<self.cfg['person_lidar_merge_m']]
             if known_people:
                 # A close cropped person may temporarily lose YOLO classification.
@@ -209,20 +266,24 @@ class DynamicObstacles(Node):
                 d=distance(robot,centre);body=self.cfg['person_radius_m']
                 if d>0. and radius<body*.7:centre=centre+(centre-np.array(robot[:2]))*body/d
                 objects.append((float(centre[0]),float(centre[1]),body,'person'))
-            else:objects.append((float(centre[0]),float(centre[1]),max(self.cfg['minimum_object_radius_m'],radius),'unclassified_object'))
+            else:objects.append((float(centre[0]),float(centre[1]),max(self.cfg['minimum_object_radius_m'],radius),'unclassified_object',None,group[np.linspace(0,len(group)-1,min(32,len(group)),dtype=int)].tolist()))
         def motion_positions(observations):
             if not getattr(self,'static_alignment',{}).get('accepted'):return None
             # Sensor-derived static-surface registration removes ego odometry and
             # AMCL drift from motion judgement only; map poses/control TF stay intact.
-            ax,ay,aa=self.alignment;rotation=np.array(self.static_alignment['rotation']);translation=np.array(self.static_alignment['translation'])
+            rotation=np.array(self.static_alignment['rotation']);translation=np.array(self.static_alignment['translation'])
+            if self.static_alignment.get('frame')=='map':
+                return [rotation@np.array(obs[:2])+translation for obs in observations]
+            ax,ay,aa=self.alignment
             output=[]
             for px,py,*_ in observations:
                 dx=px-ax;dy=py-ay
                 world=np.array([dx*math.cos(aa)+dy*math.sin(aa),-dx*math.sin(aa)+dy*math.cos(aa)])
                 output.append(rotation@world+translation)
             return output
-        self.engine.tracks.observe(people,now,'RGBD_YOLO',motion_frame,motion_positions(people),self.alignment[2],getattr(self,'static_alignment',{}).get('accepted',False))
-        self.engine.tracks.observe(objects,now,'LiDAR_FOREGROUND',motion_frame,motion_positions(objects),self.alignment[2],getattr(self,'static_alignment',{}).get('accepted',False))
+        motion_yaw=0. if getattr(self,'static_alignment',{}).get('frame')=='map' else self.alignment[2]
+        self.engine.tracks.observe(people,now,'RGBD_YOLO',motion_frame,motion_positions(people),motion_yaw,getattr(self,'static_alignment',{}).get('accepted',False),motion_reference='registered_'+getattr(self,'static_alignment',{}).get('frame','world'))
+        self.engine.tracks.observe(objects,now,'LiDAR_FOREGROUND',motion_frame,motion_positions(objects),motion_yaw,getattr(self,'static_alignment',{}).get('accepted',False),motion_reference='registered_'+getattr(self,'static_alignment',{}).get('frame','world'))
         self.engine.tracks.observe(peer,now,'PEER_MAP_TF',motion_frame)
         if self.active:
             for tr in self.engine.tracks.items.values():
@@ -232,15 +293,58 @@ class DynamicObstacles(Node):
                         tr.blocked_path=list(previous_path);break
 
     def verified_clear(self,tr):
+        # A peer's fresh namespaced TF identifies that same robot outside its
+        # old footprint, including when it left LiDAR's recognition radius.
+        # Missing/stale TF never clears the track.
+        entity_id=getattr(tr,'entity_id',None)
+        if tr.label=='robot' and entity_id in ('robot_01','robot_02') and entity_id!=self.robot:
+            try:
+                current=self.pose(entity_id+'/base_footprint')
+                if distance(current,(tr.x,tr.y))>2*tr.radius+self.cfg['clear_ray_margin_m']:
+                    return True
+            except Exception:pass
         if self.scan is None or self.scan_pose is None:return False
+        if time.monotonic()-self.scan_wall>self.cfg['source_timeout_s']:return False
+        header=getattr(self.scan,'header',None)
+        if header is not None:
+            stamp=header.stamp.sec+header.stamp.nanosec*1e-9
+            age=self.get_clock().now().nanoseconds*1e-9-stamp
+            if age<0. or age>self.cfg['source_timeout_s']:return False
         x,y,a=self.scan_pose;angle=math.atan2(tr.y-y,tr.x-x)-a
         angle=math.atan2(math.sin(angle),math.cos(angle))
         index=int(round((angle-self.scan.angle_min)/self.scan.angle_increment))
         if not 0<=index<len(self.scan.ranges):return False
         observed=self.scan.ranges[index]
         center_distance=distance((x,y),(tr.x,tr.y))
-        if (math.isfinite(observed) or math.isinf(observed)) and observed>center_distance+tr.radius+self.cfg['clear_ray_margin_m']:
-            return True
+        # A gap through the centre is insufficient: the observed fan must
+        # cover the old footprint and every sampled ray must see beyond it.
+        required=center_distance+tr.radius+self.cfg['clear_ray_margin_m']
+        if center_distance>tr.radius and self.scan.range_max>=required:
+            width=math.asin(min(1.,tr.radius/center_distance))
+            angles=self.scan.angle_min+np.arange(len(self.scan.ranges))*self.scan.angle_increment
+            difference=np.arctan2(np.sin(angles-angle),np.cos(angles-angle))
+            selected=np.abs(difference)<=width+1e-9
+            distances=np.asarray(self.scan.ranges,dtype=float)[selected]
+            expected=max(3,int(math.floor(2*width/abs(self.scan.angle_increment))))
+            fan=difference[selected]
+            covered=(len(fan)>0 and np.min(fan)<=-width+abs(self.scan.angle_increment)*.5
+                     and np.max(fan)>=width-abs(self.scan.angle_increment)*.5)
+            # Each ray has its own far intersection with the old body.
+            # Using centre+radius for every ray incorrectly treats a wall
+            # beyond a tangential edge as an occluder of the whole person.
+            delta=difference[selected]
+            perpendicular=center_distance*np.sin(delta)
+            far=center_distance*np.cos(delta)+np.sqrt(np.maximum(0.,tr.radius**2-perpendicular**2))
+            required_per_ray=far+self.cfg['clear_ray_margin_m']
+            clear=distances>required_per_ray
+            if hasattr(tr,'id'):
+                if not hasattr(self,'clearance_checks'):self.clearance_checks={}
+                self.clearance_checks[tr.id]={'covered':bool(covered),'rays':len(distances),
+                    'required_rays':expected,'blocked_rays':int(np.count_nonzero(~clear)),
+                    'minimum_echo_m':float(np.min(distances)) if len(distances) else None,
+                    'reason':'CLEAR' if covered and len(distances)>=expected and np.all(clear)
+                             else 'OCCLUDED_OR_INSUFFICIENT_COVERAGE'}
+            if covered and len(distances)>=expected and np.all(clear):return True
         # An authored chair or wall can keep the ray occupied after an erroneous
         # foreground track has gone stale. Remove only LiDAR-only tracks when the
         # current echo intersects that track and matches an aligned static surface.
@@ -251,6 +355,12 @@ class DynamicObstacles(Node):
             return False
         ray_angle=a+self.scan.angle_min+index*self.scan.angle_increment
         point=(x+observed*math.cos(ray_angle),y+observed*math.sin(ray_angle))
+        if not self.static_shapes:
+            tree=getattr(self,'occupancy_reference',None)
+            meta=getattr(self,'static_alignment',{})
+            if tree is None or not meta.get('accepted'):return False
+            registered=np.array(meta['rotation'])@np.array(point)+np.array(meta['translation'])
+            return bool(tree.query(registered)[0]<=self.cfg['static_match_margin_m'])
         return static_echo(point,self.alignment,self.static_alignment,self.static_shapes,
                            self.cfg['static_match_margin_m'])
 
@@ -262,14 +372,15 @@ class DynamicObstacles(Node):
         contact_fresh=all(wall-stamp<self.cfg['contact_timeout_s'] for stamp in self.contact_wall.values())
         if self.cfg['require_contact_sensor']:fresh=fresh and contact_fresh
         if self.last_pose:
+            self.clearance_checks={}
             self.engine.tracks.age(now,self.verified_clear)
             path=self.path
             if not path and self.target:path=[self.last_pose[:2],self.target[:2]]
             report=self.engine.update(now,self.last_pose,max(self.cmd,self.odom_speed),path,self.front_clear,self.active,self.angular_cmd,planned_path=bool(self.path_history))
         else:report={'stage':'SENSOR_STALE','stop':True,'linear_stop':True,'hold_navigation':True,'speed_ratio':0.,'tracks':[],'events':[],'time_s':now}
         if not fresh:report.update({'stage':'SENSOR_STALE','stop':True,'hold_navigation':True,'speed_ratio':0.})
-        report.update({'robot_id':self.robot,'sensor_fresh':bool(fresh),'camera_fresh':bool(camera),'lidar_fresh':bool(lidar),
-                       'contact_fresh':contact_fresh,'static_registration':getattr(self,'static_alignment',{}),'robot_pose':self.last_pose,'active_mission':self.active,'wall_time':time.time()})
+        report.update({'person_lidar_corroborated_count':self.corroborated_people_count,'robot_id':self.robot,'sensor_fresh':bool(fresh),'camera_fresh':bool(camera),'lidar_fresh':bool(lidar),
+                       'contact_fresh':contact_fresh,'uncertain_clearance':getattr(self,'clearance_checks',{}),'static_registration':getattr(self,'static_alignment',{}),'robot_pose':self.last_pose,'active_mission':self.active,'wall_time':time.time()})
         for evt in report['events']:
             if fresh:
                 self.event.publish(String(data=json.dumps({'robot_id':self.robot,**evt})))
@@ -277,8 +388,13 @@ class DynamicObstacles(Node):
         header=Header();header.frame_id='map';header.stamp=self.get_clock().now().to_msg();points=[]
         for tr in self.engine.tracks.items.values():
             if self.last_pose and now-tr.last_seen<=self.cfg['lost_timeout_s'] and distance(self.last_pose,(tr.x,tr.y))-tr.radius<=self.cfg['recognition_m']:
-                for a in np.linspace(0.,2*math.pi,24,endpoint=False):points.append([tr.x+(tr.radius+self.cfg['costmap_padding_m'])*math.cos(a),tr.y+(tr.radius+self.cfg['costmap_padding_m'])*math.sin(a),.3])
-                points.append([tr.x,tr.y,.3])
+                samples=obstacle_samples(tr,self.cfg)
+                surface=len(samples)>1
+                for px,py,radius in samples:
+                    padding=0. if surface else navigation_envelope_radius(tr,self.cfg)-radius
+                    for a in np.linspace(0.,2*math.pi,8 if surface else 24,endpoint=False):
+                        points.append([px+(radius+padding)*math.cos(a),py+(radius+padding)*math.sin(a),.3])
+                    points.append([px,py,.3])
         self.cloud.publish(create_cloud_xyz32(header,points))
         self.status.publish(String(data=json.dumps(report)))
         self.log.write(json.dumps(report)+'\n');self.log.flush()

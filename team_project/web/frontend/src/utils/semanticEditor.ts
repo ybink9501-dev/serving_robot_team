@@ -54,7 +54,7 @@ export type EditorAction =
   | { type: 'move_entity'; id: string; x: number; y: number; record?: boolean }
   | { type: 'set_label'; id: string; label: string }
   | { type: 'set_top_size'; id: string; x?: number; y?: number }
-  | { type: 'set_waypoint'; entityId: string; pose: Pose; record?: boolean }
+  | { type: 'set_waypoint'; entityId: string; waypointId?: string; pose: Pose; record?: boolean }
   | { type: 'move_waypoint'; id: string; x: number; y: number; record?: boolean }
   | { type: 'set_waypoint_yaw'; id: string; yaw: number; record?: boolean }
   /** 자동 정차 위치를 손으로 옮김/방향 지정: 그 객체의 waypoint 를 수동(manual)으로 만든다 (방향은 동·서·남·북으로 맞춤) */
@@ -164,7 +164,8 @@ export function editorReducer(s: EditorState, a: EditorAction): EditorState {
     case 'set_waypoint': {
       if (!doc.entities.some((e) => e.id === a.entityId)) return { ...s, notice: '존재하지 않는 객체입니다.' }
       const pose = { ...a.pose, yaw: normalizeYaw(a.pose.yaw) }
-      const existing = doc.waypoints.find((w) => w.entity_id === a.entityId)
+      const existing = doc.waypoints.find((w) => w.entity_id === a.entityId && (!a.waypointId || w.id === a.waypointId))
+      if (a.waypointId && !existing) return { ...s, notice: '존재하지 않는 접근 위치입니다.' }
       const waypoints = existing
         ? doc.waypoints.map((w) => (w.id === existing.id ? { ...w, pose } : w))
         : [...doc.waypoints, { id: waypointIdFor(a.entityId), entity_id: a.entityId, pose }]

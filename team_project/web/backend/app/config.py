@@ -34,6 +34,9 @@ def default_repo_root():
 
 @dataclass
 class Settings:
+    personal_url: str = 'http://127.0.0.1:8765'
+    personal_config: str = '_local_only/config/system.yaml'
+    personal_db: str = ''
     adapter: str = 'fake'                       # 'fake' | 'ros'
     robots: list = field(default_factory=lambda: [('robot_01', None)])
     repo: str = field(default_factory=default_repo_root)

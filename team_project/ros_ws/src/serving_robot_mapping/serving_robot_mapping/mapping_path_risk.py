@@ -9,6 +9,7 @@ Checking just (goal.x, goal.y, path_length_m) is insufficient and is rejected.
 
 from dataclasses import dataclass
 import math
+from scipy.spatial import cKDTree
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,9 @@ class PathRiskResult:
     reason: str
     samples: int = 0
     minimum_occupied_distance_m: float | None = None
+    failure_point: tuple | None = None
+    risk_cell: tuple | None = None
+    risk_cell_distance_m: float | None = None
 
 
 class MappingPathRiskGuard:
@@ -39,10 +43,14 @@ class MappingPathRiskGuard:
         self.max_sample_spacing_m = float(max_sample_spacing_m)
         self._grid = None
         self._occupied = ()
+        self._nonfree_ids = ()
+        self._nonfree_tree = None
 
     def update_grid(self, data, width, height, resolution,
                     origin_x, origin_y, origin_yaw=0.0):
         """Accept a ROS OccupancyGrid's numeric fields (not ROS message itself)."""
+        self._nonfree_ids = ()
+        self._nonfree_tree = None
         if (not isinstance(width, int) or isinstance(width, bool)
                 or not isinstance(height, int) or isinstance(height, bool)
                 or width < 1 or height < 1 or len(data) != width * height):
@@ -63,6 +71,9 @@ class MappingPathRiskGuard:
                       float(origin_x), float(origin_y), float(origin_yaw))
         self._occupied = tuple((i % width, i // width)
                                for i, v in enumerate(values) if v >= 65)
+        self._nonfree_ids = tuple(i for i,v in enumerate(values) if not 0<=v<=25)
+        if self._nonfree_ids:
+            self._nonfree_tree = cKDTree([(i%width+.5,i//width+.5) for i in self._nonfree_ids])
         return True
 
     def _world_to_grid(self, x, y):
@@ -72,6 +83,7 @@ class MappingPathRiskGuard:
         return (c * dx + s * dy) / res, (-s * dx + c * dy) / res
 
     def _check_point(self, x, y, cells):
+        self._failure_detail = (None, None)
         values, width, height, res, _, _, _ = self._grid
         gx, gy = self._world_to_grid(x, y)
         col, row = math.floor(gx), math.floor(gy)
@@ -92,29 +104,37 @@ class MappingPathRiskGuard:
         inflated = self.occupied_clearance_m + res * math.sqrt(2.0) / 2.0
         span = int(math.ceil(inflated / res)) + 1
         d_min = None
-        for rr in range(max(0, row - span), min(height, row + span + 1)):
-            for cc in range(max(0, col - span), min(width, col + span + 1)):
-                value = values[rr * width + cc]
-                if 0 <= value <= 25:
-                    continue
+        # Query a conservative superset of the OLD rectangular search window.
+        # Exact row-major filtering and exact distance comparisons below are unchanged.
+        radius=math.sqrt(2.)*(span+.5)*(1.+1e-12)
+        candidates=() if self._nonfree_tree is None else self._nonfree_tree.query_ball_point((gx,gy),radius)
+        for k in sorted(candidates):
+            rr,cc=divmod(self._nonfree_ids[k],width)
+            if not (max(0,row-span)<=rr<min(height,row+span+1)
+                    and max(0,col-span)<=cc<min(width,col+span+1)):
+                continue
+            value = values[rr * width + cc]
+            if 0 <= value <= 25:
+                continue
 
-                distance = math.hypot((cc + 0.5 - gx) * res,
-                                      (rr + 0.5 - gy) * res)
+            distance = math.hypot((cc + 0.5 - gx) * res,
+                                  (rr + 0.5 - gy) * res)
 
-                # Keep occupied-distance reporting limited
-                # to observed occupied cells.
-                if value >= 65:
-                    d_min = (
-                        distance if d_min is None
-                        else min(d_min, distance)
-                    )
+            # Keep occupied-distance reporting limited
+            # to observed occupied cells.
+            if value >= 65:
+                d_min = (
+                    distance if d_min is None
+                    else min(d_min, distance)
+                )
 
-                if distance <= inflated:
-                    if value == -1:
-                        return False, 'PATH_NEAR_UNKNOWN', d_min
-                    if value < 65:
-                        return False, 'PATH_NEAR_UNCERTAIN', d_min
-                    return False, 'PATH_NEAR_OCCUPIED', d_min
+            if distance <= inflated:
+                self._failure_detail = ((cc, rr, value), distance)
+                if value == -1:
+                    return False, 'PATH_NEAR_UNKNOWN', d_min
+                if value < 65:
+                    return False, 'PATH_NEAR_UNCERTAIN', d_min
+                return False, 'PATH_NEAR_OCCUPIED', d_min
         return True, 'PATH_SAMPLE_CLEAR', d_min
 
     def check_path(self, points):
@@ -151,5 +171,12 @@ class MappingPathRiskGuard:
                 if d is not None:
                     minimum = d if minimum is None else min(minimum, d)
                 if not allowed:
-                    return PathRiskResult(False, reason, checked, minimum)
+                    # Report an actual global minimum, independently of scan order.
+                    gx, gy = self._world_to_grid(x, y)
+                    exact = min((math.hypot((cc + .5 - gx) * res,
+                                           (rr + .5 - gy) * res)
+                                 for cc, rr in self._occupied), default=None)
+                    cell, distance = self._failure_detail
+                    return PathRiskResult(False, reason, checked, exact,
+                                          (x, y), cell, distance)
         return PathRiskResult(True, 'PATH_GRID_SCREEN_PASS', checked, minimum)

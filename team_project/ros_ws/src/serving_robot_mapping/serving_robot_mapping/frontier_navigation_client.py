@@ -55,6 +55,8 @@ class FrontierNavigationClient:
         self.cancel_ack = None
         self.deadline = None
         self.token = 0
+        self.last_terminal_status = None
+        self.last_cancel_ack = None
 
     @property
     def busy(self):
@@ -100,6 +102,7 @@ class FrontierNavigationClient:
         if not (
             math.isfinite(goal.x)
             and math.isfinite(goal.y)
+            and math.isfinite(goal.yaw)
         ):
             return False
 
@@ -111,7 +114,8 @@ class FrontierNavigationClient:
 
         pose.pose.position.x = goal.x
         pose.pose.position.y = goal.y
-        pose.pose.orientation.w = 1.0
+        pose.pose.orientation.z = math.sin(goal.yaw/2.)
+        pose.pose.orientation.w = math.cos(goal.yaw/2.)
 
         request = NavigateToPose.Goal()
         request.pose = pose
@@ -119,6 +123,8 @@ class FrontierNavigationClient:
         self.token += 1
         token = self.token
 
+        self.last_terminal_status = None
+        self.last_cancel_ack = None
         self.phase = "WAIT_ACCEPT"
         self.goal = goal
         self.handle = None
@@ -271,6 +277,9 @@ class FrontierNavigationClient:
                 f"Result unavailable: {exc}",
             )
             return
+
+        self.last_terminal_status = status
+        self.last_cancel_ack = self.cancel_ack
 
         if self.cancel_reason:
             if status == GoalStatus.STATUS_CANCELED:

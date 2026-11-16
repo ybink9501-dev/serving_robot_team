@@ -1,0 +1,29 @@
+{
+  "format": "R16-176-map-draft-v1",
+  "source_status": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261031_235619/R16-147_session_result.json",
+  "exploration_outcome": "OPERATOR_INTERRUPTED",
+  "handoff_state": "AUTO_EXPLORATION_UNFINISHED",
+  "original_map_files": [
+    {
+      "path": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261031_235619/R16-147_official_raw_map.yaml",
+      "sha256": "c62fe4f9bbc135b162d257b55a22722d4e510cc24b4aa9d5519c4f872a99f30c",
+      "size_bytes": 143
+    },
+    {
+      "path": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261031_235619/R16-147_official_raw_map.pgm",
+      "sha256": "dd2872176f1fbba4311f6cb15e752d51555288b9d6aa33729960087ced71f39e",
+      "size_bytes": 19254
+    }
+  ],
+  "original_map_unchanged": true,
+  "editor_contract": {
+    "edit_format": "R16-148-review-v1",
+    "coordinate_system": "PGM_TOP_LEFT_PIXELS",
+    "ui_owner": "frontend",
+    "validation_owner": "mapping",
+    "source_hash_required": true
+  },
+  "unobserved_space_requires_review": true,
+  "final_map_approved": false,
+  "navigation_map_authorized": false
+}

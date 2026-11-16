@@ -1,0 +1,6 @@
+zones: {}
+no_go: {}
+slow: {}
+preentry:
+  enabled: true
+  discover_from_map: true

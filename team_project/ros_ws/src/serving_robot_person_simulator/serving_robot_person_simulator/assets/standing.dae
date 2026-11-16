@@ -12,31 +12,31 @@
   </asset>
   <library_images>
     <image id="young_lightskinned_male_diffuse_png" name="young_lightskinned_male_diffuse_png">
-      <init_from>../materials/textures/young_lightskinned_male_diffuse.png</init_from>
+      <init_from>textures/young_lightskinned_male_diffuse.png</init_from>
     </image>
     <image id="jeans_basic_diffuse_png" name="jeans_basic_diffuse_png">
-      <init_from>../materials/textures/jeans_basic_diffuse.png</init_from>
+      <init_from>textures/jeans_basic_diffuse.png</init_from>
     </image>
     <image id="jeans01_normals_png" name="jeans01_normals_png">
-      <init_from>../materials/textures/jeans01_normals.png</init_from>
+      <init_from>textures/jeans01_normals.png</init_from>
     </image>
     <image id="tshirt02_texture_png" name="tshirt02_texture_png">
-      <init_from>../materials/textures/tshirt02_texture.png</init_from>
+      <init_from>textures/tshirt02_texture.png</init_from>
     </image>
     <image id="tshirt02_normals_png" name="tshirt02_normals_png">
-      <init_from>../materials/textures/tshirt02_normals.png</init_from>
+      <init_from>textures/tshirt02_normals.png</init_from>
     </image>
     <image id="male02_diffuse_black_png" name="male02_diffuse_black_png">
-      <init_from>../materials/textures/male02_diffuse_black.png</init_from>
+      <init_from>textures/male02_diffuse_black.png</init_from>
     </image>
     <image id="green_eye_png" name="green_eye_png">
-      <init_from>../materials/textures/green_eye.png</init_from>
+      <init_from>textures/green_eye.png</init_from>
     </image>
     <image id="eyebrow001_png" name="eyebrow001_png">
-      <init_from>../materials/textures/eyebrow001.png</init_from>
+      <init_from>textures/eyebrow001.png</init_from>
     </image>
     <image id="teeth_png" name="teeth_png">
-      <init_from>../materials/textures/teeth.png</init_from>
+      <init_from>textures/teeth.png</init_from>
     </image>
   </library_images>
   <library_effects>

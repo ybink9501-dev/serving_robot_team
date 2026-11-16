@@ -8,7 +8,7 @@
 class SimClock : public rclcpp::Node {
  public:
   SimClock():Node("team_sim_clock") {
-    out_=create_publisher<rosgraph_msgs::msg::Clock>("/clock",rclcpp::ClockQoS());
+    out_=create_publisher<rosgraph_msgs::msg::Clock>("/clock",rclcpp::ClockQoS().reliable());
     transport_.Subscribe("/clock",&SimClock::onClock,this);
   }
  private:

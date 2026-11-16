@@ -40,6 +40,7 @@ class Waiter(Node):
         self.gz_missing_tool = False
         self.lifecycle_active = set()
         self.lifecycle_pending = {}
+        self.lifecycle_sent = {}
 
         if args.clock:
             self.create_subscription(Clock, '/clock', self._on_clock, 10)
@@ -76,15 +77,24 @@ class Waiter(Node):
             if node in self.lifecycle_active or not client.service_is_ready():
                 continue
             fut = self.lifecycle_pending.get(node)
+            request_timeout = getattr(self.args, 'lifecycle_request_timeout', 0.)
+            if (fut is not None and not fut.done() and request_timeout > 0
+                    and time.monotonic()-self.lifecycle_sent[node] >= request_timeout):
+                client.remove_pending_request(fut)
+                self.lifecycle_pending.pop(node, None)
+                self.lifecycle_sent.pop(node, None)
+                fut = None
             if fut is None:
                 self.lifecycle_pending[node] = client.call_async(
                     GetState.Request())
+                self.lifecycle_sent[node] = time.monotonic()
             elif fut.done():
                 res = fut.result()
                 if res is not None and res.current_state.id == \
                         State.PRIMARY_STATE_ACTIVE:
                     self.lifecycle_active.add(node)
                 self.lifecycle_pending.pop(node, None)
+                self.lifecycle_sent.pop(node, None)
 
     def unmet(self):
         """Return a list of human readable, still unmet conditions."""
@@ -119,6 +129,8 @@ def main():
     p.add_argument('--tf', action='append', nargs=2, default=[],
                    metavar=('PARENT', 'CHILD'))
     p.add_argument('--lifecycle', action='append', default=[])
+    p.add_argument('--lifecycle-request-timeout', type=float, default=0.,
+                   help='Opt-in retry of unanswered GetState requests; 0 keeps legacy behavior')
     args, _ = p.parse_known_args(sys.argv[1:])
 
     rclpy.init()

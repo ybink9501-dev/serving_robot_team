@@ -1,0 +1,28 @@
+{
+  "role": "mapping",
+  "stack": "unmodified TEAM mapping/exploration",
+  "same_robot_model": "serving_robot_description/urdf/serving_robot.urdf.xacro",
+  "robot": "robot_01",
+  "owner": {
+    "pid": 3093,
+    "launch_pid": 3101,
+    "log": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/mapping_20261101_000104.log",
+    "mode": "mapping",
+    "mapping_stack": "team",
+    "site_id": "demo_lidar_complete_final",
+    "config": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/config/system.yaml"
+  },
+  "error": "Mapping owner stopped before readiness",
+  "runner_returncode": null,
+  "startup": null,
+  "map_updates": 0,
+  "max_odom_displacement_m": 1.7759873113025432e-13,
+  "team_session_report": null,
+  "map_complete": false,
+  "raw_map_saved": false,
+  "operation_map_changed": false,
+  "operation_map_sha256": {
+    "/mnt/f/ROS2/serving_robot_team/team_project/maps/stores/demo_store/team_lidar_complete.yaml": "e6c631542b71427f45e6a222947dd3e831105e02e1bf7c23800a43411f56da8b",
+    "/mnt/f/ROS2/serving_robot_team/team_project/maps/stores/demo_store/team_lidar_complete.pgm": "7af78fae949b37364a073528cd5eee3804cf6e05f5519db7acae9d168e3adf69"
+  }
+}

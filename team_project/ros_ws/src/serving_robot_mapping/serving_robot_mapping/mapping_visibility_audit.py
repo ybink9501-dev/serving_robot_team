@@ -6,13 +6,14 @@ existing Mapping safety gates must still validate movement.
 
 import math
 from collections import deque
+from .mapping_cell_visibility import cell_face_visible
 
 
 def boundary_visibility_audit(
     data, width, height, resolution, seed_cell,
     sensor_range_m=5.0, clearance_m=0.30, stride_cells=4,
     max_candidates=8,
-    viewpoint_filter=None,
+    viewpoint_filter=None, target_cell_faces=False, filter_before_visibility=False,
 ):
     size = width * height
 
@@ -195,13 +196,15 @@ def boundary_visibility_audit(
             continue
 
         sampled += 1
+        if filter_before_visibility and viewpoint_filter is not None and not viewpoint_filter(x,y):
+            continue
         visible_here = []
 
         for tx, ty in targets:
             if (x - tx) ** 2 + (y - ty) ** 2 > max_range_sq:
                 continue
 
-            if visible(x, y, tx, ty):
+            if (cell_face_visible(free,width,height,x,y,tx,ty) if target_cell_faces else visible(x,y,tx,ty)):
                 visible_here.append((tx, ty))
 
         if visible_here:

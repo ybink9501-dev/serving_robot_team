@@ -14,7 +14,10 @@ def build_parser():
     a('--config', help='fleet YAML file (config/fleet.example.yaml)')
     a('--mode', choices=sorted(MODES), help='; '.join('%s = %s' % kv for kv in MODES.items())
       + ' (default C)')
-    a('--adapter', choices=['fake', 'ros'], help='default fake')
+    a('--adapter', choices=['fake', 'ros', 'personal'], help='default fake')
+    a('--personal-url', help='existing local personal Fleet HTTP URL')
+    a('--personal-config', help='active generated personal system.yaml')
+    a('--personal-db', help='separate persistent gateway SQLite path')
     a('--robots', help='name[:ROS_DOMAIN_ID], comma separated, e.g. robot_01:0,robot_02:2')
     a('--repo', help='repository root (config/common and maps/stores are read from here)')
     a('--store-id', help='default demo_store')
@@ -61,6 +64,9 @@ def settings_from_args(a):
     for k, v in plain.items():
         if v is not None:
             setattr(s, k, v)
+    for key in ('personal_url', 'personal_config', 'personal_db'):
+        if getattr(a, key) is not None:
+            setattr(s, key, getattr(a, key))
     if a.robots:
         s.robots = parse_robots(a.robots)
     if a.zones is not None:

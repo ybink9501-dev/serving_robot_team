@@ -23,7 +23,8 @@ def candidate_evidence(points,obstacles,cfg,planner_id):
         clearances.append({'x':obstacle['x'],'y':obstacle['y'],'radius_m':obstacle['radius'],
                            'minimum_clearance_m':minimum,
                            'approval_required_m':cfg['robot_radius_m']+obstacle['radius']+cfg['detour_path_margin_m'],
-                           'policy_required_m':cfg['robot_radius_m']+obstacle['radius']+cfg['path_margin_m']})
+                           'policy_required_m':max(cfg['robot_radius_m']+obstacle['radius']+cfg['path_margin_m'],
+                           cfg['person_stop_m']+obstacle['radius']+cfg['detour_path_margin_m'] if obstacle.get('label')=='person' else 0.)})
     return {'planner_id':planner_id,'candidate_path':raw,
             'candidate_hash':hashlib.sha256(json.dumps(rounded).encode()).hexdigest(),
             'raw_path_sha256':hashlib.sha256(json.dumps(raw).encode()).hexdigest(),

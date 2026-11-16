@@ -1,0 +1,11 @@
+{
+  "handoff_state": "PARTIAL_MAP_CHECKPOINT",
+  "map_draft_ready": false,
+  "manual_review_required": false,
+  "auto_exploration_limited": false,
+  "auto_map_verified": false,
+  "final_map_approved": false,
+  "navigation_map_authorized": false,
+  "map_draft_manifest": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261031_235149/R16-176_map_draft_manifest.json",
+  "source_status": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261031_235149/R16-147_session_result.json"
+}

@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import subprocess
 import xacro
 import yaml
+from cafe_autonomy.profile_contract import load_profile
 from ament_index_python.packages import get_package_share_directory as share
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, RegisterEventHandler, LogInfo, Shutdown
@@ -16,12 +17,15 @@ from launch_ros.actions import Node
 def setup(context):
     cfg=Path(LaunchConfiguration('config').perform(context))
     c=yaml.safe_load(cfg.read_text())
+    identity=load_profile(cfg.parents[2],cfg) if LaunchConfiguration('mode').perform(context)=='operation' else None
     mode=LaunchConfiguration('mode').perform(context)
     if mode not in ('mapping','operation'):raise ValueError('mode must be mapping or operation')
     selected_robot=LaunchConfiguration('robot').perform(context)
     if selected_robot and selected_robot not in c['robots']:raise ValueError('Unknown robot: '+selected_robot)
     p=Path(share('cafe_autonomy'))
-    world=Path(share('serving_robot_gazebo'))/'worlds/cafe.world.sdf'
+    world=Path(c['world_file']) if c.get('world_file') else Path(share('serving_robot_gazebo'))/'worlds/cafe.world.sdf'
+    if ET.parse(world).getroot().find('world').get('name')!='cafe':
+        raise ValueError('Personal simulation adapters currently require world name cafe')
     args='-r -v3 '+str(world)
     if LaunchConfiguration('gui').perform(context)=='false':args='-s --headless-rendering '+args
     actions=[IncludeLaunchDescription(PythonLaunchDescriptionSource(str(Path(share('ros_gz_sim'))/'launch/gz_sim.launch.py')),
@@ -110,12 +114,12 @@ def setup(context):
             slam=yaml.safe_load((Path(share('serving_robot_navigation'))/'config/slam.yaml').read_text())['slam_toolbox']['ros__parameters']
             slam.update({'odom_frame':r+'/odom','base_frame':r+'/base_footprint','scan_topic':f'/{r}/scan','use_sim_time':True})
             actions += [n('async_slam_toolbox_node','slam_toolbox',[slam],'slam_toolbox'),
-                        n('lifecycle_manager','nav2_lifecycle_manager',[{'use_sim_time':True,'autostart':True,'node_names':['slam_toolbox']}],'lifecycle_manager_mapping')]
+                        n('lifecycle_manager','nav2_lifecycle_manager',[{'use_sim_time':True,'autostart':True,'node_names':['slam_toolbox'],'bond_timeout':0.0}],'lifecycle_manager_mapping')]
             continue
         params=c['nav2_files'][r]
         actions.append(n('zone_masks',params=[{'use_sim_time':True,'map_yaml':c['map_yaml'],'zones_file':c['zones_file'],'robot_id':r}]))
         actions.append(n('zone_speed',params=[{'use_sim_time':True,'robot_id':r,'zones_file':c['zones_file']}]))
-        actions.append(n('dynamic_obstacles',params=[{'use_sim_time':True,'robot_id':r,'runtime_limits_file':c['limits_file'],'log_directory':str(cfg.parents[2]/'_local_only/dynamic'),'static_world_file':str(world),'alignment_x':c['world_to_map']['x'],'alignment_y':c['world_to_map']['y'],'alignment_yaw':c['world_to_map']['yaw']}]))
+        actions.append(n('dynamic_obstacles',params=[{'use_sim_time':True,'robot_id':r,'runtime_limits_file':c['limits_file'],'log_directory':str(cfg.parents[2]/'_local_only/dynamic'),'static_world_file':str(world) if c.get('static_world_geometry',True) else '','alignment_x':c['world_to_map']['x'],'alignment_y':c['world_to_map']['y'],'alignment_yaw':c['world_to_map']['yaw']}]))
         guard=c.get('localization_guard',{})
         guarded=bool(guard.get('enabled',False))
         if guarded:
@@ -123,6 +127,7 @@ def setup(context):
                 'use_sim_time':True,'robot_id':r,
                 'initial_map_x':pose['map_x'],'initial_map_y':pose['map_y'],
                 'initial_map_yaw':pose['map_yaw'],
+                'transform_tolerance_s':guard.get('transform_tolerance_s',0.3),
                 'known_radius_m':guard['known_radius_m'],
                 'min_known_fraction':guard['min_known_fraction']}]))
         actions += [n('map_server','nav2_map_server',[params,{'yaml_filename':c['map_yaml']}]),
@@ -135,12 +140,16 @@ def setup(context):
             actions.append(n(exe,package,ps,remappings=rm))
         actions += [n('lifecycle_guard'),
                     n('semantic_safety',params=[{'use_sim_time':True,'robot_id':r,'runtime_limits_file':c['limits_file']}]),
-                    n('mission',params=[{'use_sim_time':True,'robot_id':r,'waypoints_file':c['waypoints_file'],'state_file':str(cfg.parents[2]/'_local_only/missions'/(r+'.json')),'runtime_limits_file':c['limits_file']}]),
+                    n('mission',params=[{'use_sim_time':True,'robot_id':r,'waypoints_file':c['waypoints_file'],'state_file':str(Path(c.get('mission_state_directory',str(cfg.parents[2]/'_local_only/missions')))/(r+'.json')),'runtime_limits_file':c['limits_file']}]),
                     n('rgbd_people',params=[{'use_sim_time':True,'robot_id':r,'weights':c['perception']['weights'],'timeout_s':c['perception']['timeout_s']}])]
     if mode=='operation':
         actions += [Node(package='cafe_autonomy_gazebo',executable='gazebo_truth_evidence',name='gazebo_truth_evidence'),
-                    Node(package='cafe_autonomy',executable='fleet',name='cafe_fleet',respawn=True,respawn_delay=2.,parameters=[{'use_sim_time':True,'http_port':c['http_port'],'database_path':c['database_path'],'runtime_limits_file':c['limits_file'],'zones_file':c['zones_file'],'waypoints_file':c['waypoints_file']}],output='screen'),
+                    Node(package='cafe_autonomy',executable='fleet',name='cafe_fleet',respawn=True,respawn_delay=2.,parameters=[{'use_sim_time':True,'auto_home_when_idle':c.get('auto_home_when_idle',True),'http_port':c['http_port'],'site_id':identity['site_id'],'profile_revision':identity['profile_revision'],'database_path':c['database_path'],'runtime_limits_file':c['limits_file'],'zones_file':c['zones_file'],'waypoints_file':c['waypoints_file']}],output='screen'),
                     Node(package='cafe_autonomy',executable='metrics',name='cafe_metrics',parameters=[{'use_sim_time':True,'log_directory':str(cfg.parents[2]/'_local_only/metrics'),'alignment_x':c['world_to_map']['x'],'alignment_y':c['world_to_map']['y'],'alignment_yaw':c['world_to_map']['yaw']}],output='screen')]
+    if mode=='operation' and c.get('people',{}).get('enabled',False):
+        actions.append(IncludeLaunchDescription(PythonLaunchDescriptionSource(
+            str(Path(share('serving_robot_person_simulator'))/'launch/people.launch.py')),
+            launch_arguments={'config':c['people']['config']}.items()))
     def after_contact(event,context):
         return spawns if event.returncode==0 else [LogInfo(msg='Contact system failed; stopping bringup'),Shutdown(reason='Contact system unavailable')]
     actions += [RegisterEventHandler(OnProcessExit(target_action=loader,on_exit=after_contact)),loader]

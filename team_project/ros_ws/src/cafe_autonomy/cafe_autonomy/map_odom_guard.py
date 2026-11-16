@@ -9,6 +9,7 @@ import zlib
 
 import rclpy
 from rclpy.node import Node
+from rclpy.duration import Duration
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
 from geometry_msgs.msg import PoseWithCovarianceStamped, TransformStamped
 from nav_msgs.msg import OccupancyGrid, Odometry
@@ -61,6 +62,7 @@ class MapOdomGuard(Node):
             ("initial_map_x", 0.0),
             ("initial_map_y", 0.0),
             ("initial_map_yaw", 0.0),
+            ("transform_tolerance_s", 0.3),
             ("known_radius_m", 0.75),
             ("min_known_fraction", 0.2),
         ):
@@ -69,6 +71,9 @@ class MapOdomGuard(Node):
         self.tx = float(self.get_parameter("initial_map_x").value)
         self.ty = float(self.get_parameter("initial_map_y").value)
         self.da = float(self.get_parameter("initial_map_yaw").value)
+        self.transform_tolerance = float(self.get_parameter("transform_tolerance_s").value)
+        if not math.isfinite(self.transform_tolerance) or not 0.0 < self.transform_tolerance <= 1.0:
+            raise ValueError("TF validity tolerance must be in (0, 1] seconds")
         self.radius = float(self.get_parameter("known_radius_m").value)
         self.minimum = float(self.get_parameter("min_known_fraction").value)
         if self.radius <= 0.0 or not 0.0 <= self.minimum <= 1.0:
@@ -171,7 +176,9 @@ class MapOdomGuard(Node):
         if self.pending_initial_pose:
             return
         t = TransformStamped()
-        t.header.stamp = self.get_clock().now().to_msg()
+        # Match AMCL-style transform validity across the 10 Hz publish interval.
+        # A pose stamped between broadcasts must not fail future extrapolation.
+        t.header.stamp = (self.get_clock().now() + Duration(seconds=self.transform_tolerance)).to_msg()
         t.header.frame_id = "map"
         t.child_frame_id = f"{self.robot}/odom"
         t.transform.translation.x = self.tx

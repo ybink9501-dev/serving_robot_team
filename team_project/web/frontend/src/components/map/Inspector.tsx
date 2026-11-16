@@ -169,7 +169,7 @@ export function Inspector({ doc, selection, dispatch }: { doc: SemanticMap; sele
   if (selection.kind === 'waypoint') {
     const wp = doc.waypoints.find((w) => w.id === selection.id)
     if (!wp) return null
-    const set = (patch: Partial<typeof wp.pose>) => dispatch({ type: 'set_waypoint', entityId: wp.entity_id, pose: { ...wp.pose, ...patch } })
+    const set = (patch: Partial<typeof wp.pose>) => dispatch({ type: 'set_waypoint', entityId: wp.entity_id, waypointId: wp.id, pose: { ...wp.pose, ...patch } })
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} key={wp.id}>
         <dl className="kv">

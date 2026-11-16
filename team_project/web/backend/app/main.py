@@ -31,6 +31,11 @@ def build_fleet(settings, site, repo, hub):
 
 def create_app(settings=None, repo=None):
     settings = settings or Settings()
+    if settings.adapter == 'personal':
+        if repo is not None:
+            raise ValueError('Personal mode uses its own durable gateway store')
+        from .personal import create_personal_app
+        return create_personal_app(settings)
     site = Site(settings.repo, settings.store_id)
     repo = repo or (MemoryRepository() if settings.db_url == 'memory'
                     else SqlRepository(settings.db_url))
@@ -87,4 +92,8 @@ def create_app(settings=None, repo=None):
                                    settings.mapping_shift_origin)
     for module in (maps, tasks, robots, debug, ws):
         app.include_router(module.router)
+    @app.get('/api/capabilities')
+    def capabilities():
+        return {'mode': settings.adapter}
+
     return app

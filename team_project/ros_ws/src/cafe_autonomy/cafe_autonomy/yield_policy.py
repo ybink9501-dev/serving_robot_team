@@ -70,17 +70,28 @@ def segment_distance(point, a, b):
 
 
 def assess_path(points, here, candidate, peer, separation, start_tolerance,
-                goal_tolerance):
+                goal_tolerance, contact_clearance=0.0):
     """Reject a stale, incomplete, or peer-intersecting Nav2 path."""
     if len(points) < 2 or distance(points[0], here) > start_tolerance:
         return None
     if distance(points[-1], candidate) > goal_tolerance:
         return None
     clearance = min(segment_distance(peer, a, b) for a, b in zip(points, points[1:]))
-    if clearance < separation:
-        return None
+    initial=distance(points[0],peer)
+    escaping=initial<separation
+    if escaping:
+        if initial<contact_clearance:return None
+        recovered=False
+        for a,b in zip(points,points[1:]):
+            before=distance(a,peer);after=distance(b,peer)
+            required=separation if recovered else before
+            if segment_distance(peer,a,b)+1e-6<required:return None
+            if not recovered and after+1e-6<before:return None
+            recovered=recovered or after>=separation
+        if not recovered:return None
+    elif clearance<separation:return None
     length = sum(distance(a, b) for a, b in zip(points, points[1:]))
-    return {"length_m": length, "peer_clearance_m": clearance}
+    return {"length_m": length, "peer_clearance_m": clearance, "escape_from_close_start":escaping,"initial_peer_clearance_m":initial}
 
 
 def choose_yield(options, last_yielder=None):
@@ -89,3 +100,94 @@ def choose_yield(options, last_yielder=None):
         return None
     return min(options, key=lambda o: (bool(o["rear_turn"]), o["length_m"],
                                        o["turn_rad"], o["robot"] == last_yielder))
+
+
+def yield_goal_clear(grid, point, radius):
+    """A yield endpoint needs known free space for final approach/rotation.
+
+    Nav2's path planner can accept a goal whose point is free but whose
+    final body envelope reaches furniture. Unknown cells are not free.
+    """
+    if grid is None:return False
+    info=grid.info;res=info.resolution
+    if not math.isfinite(res) or res<=0:return False
+    q=info.origin.orientation
+    yaw=math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))
+    dx=point[0]-info.origin.position.x;dy=point[1]-info.origin.position.y
+    x=(math.cos(yaw)*dx+math.sin(yaw)*dy)/res
+    y=(-math.sin(yaw)*dx+math.cos(yaw)*dy)/res
+    r=radius/res
+    if x-r<0 or y-r<0 or x+r>=info.width or y+r>=info.height:return False
+    for iy in range(math.floor(y-r),math.floor(y+r)+1):
+        for ix in range(math.floor(x-r),math.floor(x+r)+1):
+            ex=max(ix-x,0.,x-(ix+1));ey=max(iy-y,0.,y-(iy+1))
+            if ex*ex+ey*ey>r*r:continue
+            value=grid.data[iy*info.width+ix]
+            if value<0 or value>=50:return False
+    return True
+
+
+def passed_blocking_position(position, winner_start, blocker_start, clearance):
+    """Outside a zone before entry is not evidence of a completed passage.
+
+    Require progress past the original blocker along the approach direction.
+    The caller also checks current zone occupancy and destination clearance.
+    """
+    if position is None or winner_start is None or blocker_start is None:return False
+    values=(*position[:2],*winner_start[:2],*blocker_start[:2],clearance)
+    if not all(math.isfinite(v) for v in values):return False
+    dx=blocker_start[0]-winner_start[0];dy=blocker_start[1]-winner_start[1]
+    length=math.hypot(dx,dy)
+    if length<1e-6:return False
+    progress=((position[0]-blocker_start[0])*dx+(position[1]-blocker_start[1])*dy)/length
+    return progress>=clearance
+
+
+def segment_crosses_rectangle(a,b,bounds):
+    lo,hi=0.,1.
+    for axis in (0,1):
+        lower,upper=sorted(bounds[axis*2:axis*2+2])
+        delta=b[axis]-a[axis]
+        if abs(delta)<1e-9:
+            if not lower<=a[axis]<=upper:return False
+        else:
+            t0,t1=sorted(((lower-a[axis])/delta,(upper-a[axis])/delta))
+            lo=max(lo,t0);hi=min(hi,t1)
+            if lo>hi:return False
+    return True
+
+def opposed_corridor_paths(poses,goals,paths,zones):
+    """Reserve only a shared corridor on both actual Nav2 paths before entry."""
+    robots=('robot_01','robot_02');shared=[]
+    if any(r not in poses or not goals.get(r) or len(paths.get(r,[]))<2 for r in robots):return shared
+    for name,b in zones.items():
+        if not all(any(segment_crosses_rectangle(a,c,b) for a,c in zip(paths[r],paths[r][1:])) for r in robots):continue
+        # Opposing paths can cross either dimension of a map's traffic region.
+        # No assumed world orientation or fixed corridor name is needed.
+        for axis in (0,1):
+            lower,upper=b[axis*2:axis*2+2];sides=[]
+            for r in robots:
+                p,g=poses[r][axis],goals[r][axis]
+                side=-1 if p<lower else 1 if p>upper else 0
+                if not side or not (g>upper if side<0 else g<lower):break
+                sides.append(side)
+            if len(sides)==2 and sides[0]!=sides[1]:shared.append(name);break
+    return shared
+
+def reserved_winner_clear(poses,winner,loser,zones,names,separation,body_margin):
+    if winner not in poses or loser not in poses:return False
+    if distance(poses[winner],poses[loser])<separation:return False
+    return not any(in_rectangle(poses[loser],zones[name],body_margin) for name in names)
+
+
+def reservation_setup_pending(probe,recovery,statuses):
+    if probe and probe.get('proactive'):return True
+    return bool(recovery and recovery.get('proactive') and statuses.get(recovery['loser'],{}).get('state') not in ('YIELDING','YIELD_WAIT'))
+
+def preentry_pause_acknowledged(statuses,request_ids):
+    return bool(request_ids) and all(
+        statuses.get(r,{}).get('request_id')==rid
+        and (statuses[r].get('nav_paused') is True or statuses[r].get('state')=='RECOVERY_WAIT')
+        and statuses[r].get('goal_execution_verified_idle') is True
+        and statuses[r].get('state') in ('GOING_PICKUP','GOING_TABLE','GOING_DIRECT','GOING_KITCHEN','RETURNING_HOME','RECOVERY_WAIT')
+        for r,rid in request_ids.items())

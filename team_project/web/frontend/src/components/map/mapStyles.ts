@@ -8,6 +8,7 @@ export const ENTITY_STYLE: Record<EntityType, { color: string; letter: string }>
 }
 
 export const ZONE_STYLE: Record<ZoneType, { color: string; dash?: string }> = {
+  operating: { color: '#168476', dash: '8 3' },
   exclusive: { color: '#4b5ff0' },
   no_go: { color: '#d93a32' },
   slow: { color: '#d99a00', dash: '6 4' },

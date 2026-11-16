@@ -17,8 +17,8 @@ from action_msgs.msg import GoalStatus
 from tf2_ros import Buffer, TransformListener
 from lifecycle_msgs.srv import GetState
 from .policy import (ACTIVE, norm_angle, distance, velocity_limit,
-                     GOAL_NAV_XY_M, ARRIVAL_DETECT_M, FINAL_PHYSICAL_M, next_after_nav)
-from .waypoints import read_waypoints, choose_waypoint
+                     GOAL_NAV_XY_M, ARRIVAL_DETECT_M, FINAL_PHYSICAL_M, next_after_nav, may_confirm)
+from .waypoints import read_waypoints, choose_waypoint, table_destinations
 from .runtime_config import load_limits
 from .dynamic_mission import DynamicMissionMixin
 from .goal_recovery import GoalRecoveryMixin
@@ -37,7 +37,7 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
         self.declare_parameter('runtime_limits_file','')
         self.limits=load_limits(self.get_parameter('runtime_limits_file').value)
         self.xy_tolerance=self.limits['arrival']['xy_tolerance_m']
-        self.fine_control_xy_target=self.limits['arrival'].get('control_xy_target_m',self.xy_tolerance)
+        self.localization_margin=self.limits['arrival'].get('localization_margin_m',0.)
         self.yaw_tolerance=self.limits['arrival']['yaw_tolerance_rad']
         self.fine_engage_max=self.limits['arrival']['fine_engage_max_m']
         self.fine_timeout=self.limits['arrival']['fine_timeout_s']
@@ -67,19 +67,31 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
         self.init_goal_recovery()
         self.create_subscription(String,'safety_status',self.on_safety_status,10)
         self.nav_states={};self.health_clients={name:self.create_client(GetState,name+'/get_state') for name in ('amcl','map_server','controller_server','bt_navigator','collision_monitor')}
-        self.health_pending=set();self.create_timer(1.0,self.check_health)
+        self.health_pending={};self.create_timer(1.0,self.check_health)
         self.create_timer(0.05,self.tick)
         self.get_logger().info(self.robot+' mission ready')
 
     def check_health(self):
+        now=time.monotonic()
         for name,client in self.health_clients.items():
-            if name in self.health_pending or not client.service_is_ready():continue
-            self.health_pending.add(name)
+            pending=self.health_pending.get(name)
+            if pending is not None:
+                future,sent=pending
+                if now-sent<2.0:continue
+                self.health_pending.pop(name,None)
+                client.remove_pending_request(future)
+                future.cancel()
+            if not client.service_is_ready():continue
+            future=client.call_async(GetState.Request())
+            self.health_pending[name]=(future,now)
             def done(f,name=name):
-                self.health_pending.discard(name)
+                current=self.health_pending.get(name)
+                if current is None or current[0] is not f:return
+                self.health_pending.pop(name,None)
+                if f.cancelled():return
                 try:self.nav_states[name]=(f.result().current_state.id,time.monotonic())
                 except Exception:self.nav_states.pop(name,None)
-            client.call_async(GetState.Request()).add_done_callback(done)
+            future.add_done_callback(done)
 
     def nav_ready(self):
         return self.action.server_is_ready() and all(name in self.nav_states and self.nav_states[name][0]==3 and time.monotonic()-self.nav_states[name][1]<3. for name in self.health_clients)
@@ -102,9 +114,14 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
 
     def _apply_hold(self):
         self.hold=bool(self.traffic_hold or self.dynamic_hold)
-        # Keep a healthy NavigateToPose UUID during intentional safety waits.
-        # Only a 30s detour switch, explicit cancel, precision handoff or recovery
-        # cancels it. The downstream safety chain still outputs zero immediately.
+        # Fleet-controlled waits can outlast the Nav2 progress checker. Pause
+        # their action explicitly, preserving the task and destination. Short
+        # dynamic observation waits retain their action until a detour switch.
+        if (self.traffic_hold and self.goal_handle and not self.goal_pending
+                and not self.fine and not self.cancel_requested
+                and not any((self.pause_pending,self.yield_pending,self.precision_pending,self.recovery_switch_pending))):
+            self.pause_pending=True;self.goal_handle.cancel_goal_async()
+            self.emit('FLEET_NAV_PAUSE_REQUEST')
         if not self.hold and self.paused_nav and self.goal_confirmed_inactive and not self.goal_pending and not self.goal_handle and not self.detour_planning and self.detour_request is None and self.state in ('GOING_PICKUP','GOING_TABLE','GOING_DIRECT','GOING_KITCHEN','RETURNING_HOME','YIELDING'):
             self.resume_held_goal()
 
@@ -144,8 +161,9 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
                 if distance(pose,(home['x'],home['y']))<self.limits['fleet']['robot_separation_m']:
                     self.emit('YIELD_REJECTED',reason='HOME is not a traffic parking pose');return
                 self.yield_pose=tuple(pose)
-                if self.paused_nav:
-                    self.yield_saved=(self.target_name,self.state,self.target);self.paused_nav=False
+                if (self.paused_nav or self.state=='RECOVERY_WAIT') and self.goal_confirmed_inactive and not self.goal_pending and not self.goal_handle:
+                    saved_state=self.recovery_phase if self.state=='RECOVERY_WAIT' else self.state
+                    self.yield_saved=(self.target_name,saved_state,self.target);self.paused_nav=False
                     self.start_goal('FLEET_YIELD','YIELDING',self.yield_pose);self.emit('YIELD_RETREAT_STARTED');return
                 if not self.goal_handle:return
                 self.yield_saved=(self.target_name,self.state,self.target);self.yield_pending=True
@@ -177,7 +195,7 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
             if v.get('robot_id')!=self.robot:raise ValueError('Wrong robot')
             if v.get('mode') not in ('KITCHEN_PICKUP','DELIVER_DIRECT','TABLE_COLLECT','GO_KITCHEN','GO_HOME'):
                 raise ValueError('Unknown mode')
-            if v.get('mode') not in ('GO_HOME','GO_KITCHEN') and v.get('table') not in ('table_01','table_02','table_03','table_04'):
+            if v.get('mode') not in ('GO_HOME','GO_KITCHEN') and v.get('table') not in table_destinations(self.poses):
                 raise ValueError('Unknown table')
             self.request_id=v['request_id'];self.mode=v['mode'];self.table=v.get('table');self.side=v.get('side','auto')
             self.accepted_requests[self.request_id]=fingerprint
@@ -201,8 +219,9 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
             if not err or err[0]>self.xy_tolerance or abs(err[1])>self.yaw_tolerance:raise ValueError('Confirmation location/yaw mismatch')
             if command=='LOAD' and self.mode=='KITCHEN_PICKUP' and self.state=='WAIT_LOAD':
                 already.append(command);self.start_goal(self.table,'GOING_TABLE')
-            elif ((command=='COMPLETE' and self.mode in ('KITCHEN_PICKUP','DELIVER_DIRECT')) or (command=='COLLECTED' and self.mode=='TABLE_COLLECT')) and self.state=='WAIT_HANDOVER':
-                already.append(command);self.state='COMPLETED';self.emit('MISSION_SIGNAL_COMPLETE',command=command)
+            elif may_confirm(command,self.state,self.mode):
+                already.append(command)
+                self.state='COMPLETED';self.emit('MISSION_SIGNAL_COMPLETE',command=command)
             else:raise ValueError('Unexpected confirmation '+str(command)+' at '+self.state)
         except Exception as exc:self.emit('CONFIRM_REJECTED',reason=str(exc))
 
@@ -240,6 +259,7 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
             self.emit('NAV_GOAL_ACCEPTED')
             if self.cancel_requested:h.cancel_goal_async()
             h.get_result_async().add_done_callback(lambda f,s=seq:self.goal_result(f,s))
+            self._apply_hold()
         except Exception as exc:
             self.recovery_phase=self.state;self.state='RECOVERY_WAIT';self.goal_confirmed_inactive=False
             self.reconcile_after_restart=True;self.recovery_reason='GOAL_ACCEPTANCE_UNCERTAIN: '+str(exc)
@@ -262,8 +282,10 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
         if self.pause_pending:
             self.pause_pending=False
             if status==GoalStatus.STATUS_CANCELED:
-                self.paused_nav=True;self.emit('TRAFFIC_NAV_PAUSED');return
-            if status!=GoalStatus.STATUS_SUCCEEDED:self.fail('TRAFFIC_PAUSE_FAILED','Nav2 cancellation failed');return
+                self.paused_nav=True;self.emit('TRAFFIC_NAV_PAUSED')
+                if not self.yield_pending:return
+                self.paused_nav=False
+            if status not in (GoalStatus.STATUS_SUCCEEDED,GoalStatus.STATUS_CANCELED):self.fail('TRAFFIC_PAUSE_FAILED','Nav2 cancellation failed');return
         if self.yield_pending:
             self.yield_pending=False
             if status==GoalStatus.STATUS_CANCELED:
@@ -335,13 +357,13 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
         moving=self.state in ('GOING_PICKUP','GOING_TABLE','GOING_DIRECT','GOING_KITCHEN','RETURNING_HOME','YIELDING')
         if moving and p and not self.hold:
             err=self.pose_error()
-            fine_turn=max(abs(err[1]),abs(norm_angle(math.atan2(self.target[1]-p[1],self.target[0]-p[0])-p[2])) if err and err[0]>self.xy_tolerance else 0.) if err else float('inf')
-            rotation_remaining=self.limits['navigation']['continuous_rotation_rad']-self.rotation_status.get('continuous_rad',0.)
-            if err and err[0]<=self.fine_engage_max and fine_turn+.08<rotation_remaining and self.goal_handle and not self.precision_pending:
+            # Near the goal, Nav2's forward path can require a loop larger
+            # than the remaining distance. Transfer once cancellation is
+            # acknowledged; final commands still pass through every safety
+            # and measured rotation limit (including its stop/reset pause).
+            if (err and err[0]<=self.fine_engage_max and self.goal_handle
+                    and not any((self.precision_pending,self.recovery_switch_pending,self.pause_pending,self.yield_pending))):
                 self.precision_pending=True;self.goal_handle.cancel_goal_async()
-            elif err and err[0]<=self.fine_engage_max and not self.forward_curve_goal and self.goal_handle and not (self.recovery_switch_pending or self.precision_pending or self.pause_pending):
-                self.recovery_switch_pending=True;self.recovery_reason='ROTATION_LIMIT_FORWARD_PATH'
-                self.goal_handle.cancel_goal_async();self.emit('ROTATION_BUDGET_PLANNER_SWITCH_REQUEST')
             policy_now=self.get_clock().now().nanoseconds*1e-9
             if self.odom:
                 odom_pose=self.odom.pose.pose;self.history.append((policy_now,odom_pose.position.x,odom_pose.position.y,yaw(odom_pose.orientation)))
@@ -360,25 +382,36 @@ class Mission(DynamicMissionMixin,GoalRecoveryMixin,Node):
         if self.fine:self.fine_step()
         report={'robot_id':self.robot,**self.goal_metadata(),'confirmation_pose_valid':bool(self.pose_error() and self.pose_error()[0]<=self.xy_tolerance and abs(self.pose_error()[1])<=self.yaw_tolerance),'state':self.state,'map_valid':self.robot_pose() is not None,
                 'request_id':self.request_id,'mode':self.mode,'table':self.table,
-                'target':self.target_name,'reason':self.fail_reason,'fine':self.fine,'dynamic_hold':self.dynamic_hold,'dynamic_stage':self.dynamic_report.get('stage'),'detour_active':self.detour_path is not None,'pose_error':self.pose_error()[:2] if self.pose_error() else None,'target_pose':self.target,'nav_ready':self.nav_ready(),'lifecycle':{name:value[0] for name,value in self.nav_states.items()}}
+                'target':self.target_name,'reason':self.fail_reason,'fine':self.fine,'nav_paused':self.paused_nav,'dynamic_hold':self.dynamic_hold,'dynamic_stage':self.dynamic_report.get('stage'),'detour_active':self.detour_path is not None,'pose_error':self.pose_error()[:2] if self.pose_error() else None,'target_pose':self.target,'nav_ready':self.nav_ready(),'lifecycle':{name:value[0] for name,value in self.nav_states.items()}}
         self.pub.publish(String(data=json.dumps(report,ensure_ascii=False)))
 
     def fine_step(self):
         # Every command still flows through semantic safety and Collision Monitor.
-        if self.hold:self.fine_since=time.monotonic();self.fine_pub.publish(Twist());return
-        if time.monotonic()-self.fine_since > self.fine_timeout:
+        if self.hold:self.fine_since=time.monotonic()
+        if not self.hold and time.monotonic()-self.fine_since > self.fine_timeout:
             self.fail('PRECISION_TIMEOUT','Could not reach configured map acceptance in time');return
         p=self.robot_pose()
         if p is None:
             self.fine_pub.publish(Twist());return
         tx,ty,ta=self.target;x,y,yaw_now=p
         d=math.hypot(tx-x,ty-y);eyaw=norm_angle(ta-yaw_now)
-        # Once within the 4 cm control target, finish yaw alignment while the
-        # existing 10 cm acceptance remains valid; map jitter must not reverse
-        # the turn toward the position target on every tick.
-        if d<=self.fine_control_xy_target:self.fine_aligning=True
+        # Preserve the 10 cm contract while reserving the configured budget
+        # for localization error; no Gazebo truth enters this controller.
+        acceptance=self.xy_tolerance-getattr(self,'localization_margin',0.)
+        if d<=acceptance:self.fine_aligning=True
         elif d>self.xy_tolerance:self.fine_aligning=False
-        if self.fine_aligning and d<=self.xy_tolerance and abs(eyaw)<=self.limits['arrival']['control_yaw_target_rad']:
+        # A safety hold must never authorize motion, but it need not prevent
+        # proving an already settled arrival. Stale sensors or actual contact
+        # still withhold completion, as does an unreconciled Nav2 goal.
+        if self.fine_aligning and d>acceptance and abs(eyaw)<=self.limits['arrival']['control_yaw_target_rad']:
+            self.fine_aligning=False
+        settled_allowed = not self.hold or (
+            self.dynamic_report.get('sensor_fresh') is True
+            and not self.dynamic_report.get('contact_latched', False)
+            and not self.dynamic_report.get('contact_active', False)
+            and self.goal_confirmed_inactive
+        )
+        if settled_allowed and self.fine_aligning and d<=acceptance and abs(eyaw)<=self.limits['arrival']['control_yaw_target_rad']:
             self.fine_pub.publish(Twist())
             still=self.odom and abs(self.odom.twist.twist.linear.x)<=self.limits['arrival']['settle_linear_mps'] and abs(self.odom.twist.twist.angular.z)<=self.limits['arrival']['settle_angular_rps']
             if still:

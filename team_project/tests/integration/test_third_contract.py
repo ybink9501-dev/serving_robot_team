@@ -27,7 +27,7 @@ def test_explicit_followup_modes_and_collection_confirmation():
  core=FleetCore();home,_=core.submit('home',None,'robot_01','GO_HOME');kitchen,_=core.submit('kitchen',None,'robot_02','GO_KITCHEN')
  assert core.dispatch_next({'robot_01','robot_02'}).mode=='GO_HOME'
  assert next_after_nav('GOING_KITCHEN','GO_KITCHEN')=='COMPLETED'
- assert may_confirm('COLLECTED','WAIT_HANDOVER','TABLE_COLLECT')
+ assert may_confirm('COLLECTED','WAIT_COLLECTION','TABLE_COLLECT')
  assert not may_confirm('COMPLETE','WAIT_HANDOVER','TABLE_COLLECT')
 
 def test_nav2_progress_checker_is_forty_seconds():

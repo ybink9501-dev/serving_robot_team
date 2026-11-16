@@ -15,7 +15,7 @@ def select_visibility_fallback(
     robot_xy,
     visited,
     goal_clear,
-    max_results=8,
+    max_results=8, sensor_range_m=5.0,
 ):
     if grid is None or len(grid) != 7:
         raise ValueError("Missing or invalid map grid")
@@ -101,7 +101,8 @@ def select_visibility_fallback(
         height,
         res,
         seed,
-        sensor_range_m=5.0,
+        sensor_range_m=sensor_range_m,
+        target_cell_faces=True, filter_before_visibility=True,
         clearance_m=0.30,
         stride_cells=4,
         max_candidates=32,
@@ -134,7 +135,8 @@ def select_visibility_fallback(
             height,
             res,
             seed,
-            sensor_range_m=5.0,
+            sensor_range_m=sensor_range_m,
+            target_cell_faces=True, filter_before_visibility=True,
             clearance_m=0.30,
             stride_cells=1,
             max_candidates=32,
@@ -169,6 +171,8 @@ def select_visibility_fallback(
             break
 
     metrics = {
+        "sensor_range_m": sensor_range_m,
+        "visibility_endpoint": "CELL_INTERIOR_SAMPLES_WITH_NO_CORNER_TUNNELING",
         "status": analysis["status"],
         "viewpoint_stride_cells": viewpoint_stride_cells,
         "unknown_boundary_cells": (

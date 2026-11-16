@@ -40,9 +40,9 @@ class GoalRecoveryMixin:
             self.failed_detour_paths=set(data.get('failed_detour_paths',[]))
             self.target=tuple(data['target']) if data.get('target') else None
             old=data.get('state','IDLE');self.recovery_phase=data.get('recovery_phase') or old
-            if old not in ('IDLE','COMPLETED','CANCELED','ERROR','WAIT_LOAD','WAIT_HANDOVER'):
+            if old not in ('IDLE','COMPLETED','CANCELED','ERROR','WAIT_LOAD','WAIT_HANDOVER','WAIT_COLLECTION'):
                 self.state='RECOVERY_WAIT';self.goal_confirmed_inactive=False;self.reconcile_after_restart=True;self.recovery_reason='SUPERVISOR_RESTART'
-            else:self.state=old;self.wait_pose_recheck=old in ('WAIT_LOAD','WAIT_HANDOVER')
+            else:self.state=old;self.wait_pose_recheck=old in ('WAIT_LOAD','WAIT_HANDOVER','WAIT_COLLECTION')
     def persist_mission(self):
         if not hasattr(self,'state_path'):return
         data={k:getattr(self,k,None) for k in ('request_id','mode','table','side','target_name','target','state','goal_uuid','goal_kind','goal_publish_count','goal_retry_count','recovery_phase','recovery_reason','accepted_requests','confirmed_signals','fail_reason','detour_attempt_count','detour_plan_count','detour_ids','forward_curve_goal')}

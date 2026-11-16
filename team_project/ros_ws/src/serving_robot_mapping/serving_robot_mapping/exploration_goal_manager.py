@@ -22,12 +22,14 @@ class VerifiedFrontierGoal:
     path_length_m: float
     # R16_170B_ACTUAL_PLANNER_PATH_SCREEN: validated Nav2 path, not a straight line.
     path_points: tuple[tuple[float, float], ...] = ()
+    yaw: float = 0.0
 
     def __post_init__(self) -> None:
         values = (
             self.x,
             self.y,
             self.path_length_m,
+            self.yaw,
         )
 
         if not all(math.isfinite(v) for v in values):
@@ -154,6 +156,14 @@ class ExplorationGoalManager:
         self.state_machine.transition_to(
             MappingState.EXPLORING
         )
+
+    def navigation_stopped(self) -> None:
+        """A confirmed user/session stop is unfinished, not a route failure."""
+        if self.state_machine.state != MappingState.NAVIGATING or self.active_goal is None:
+            raise RuntimeError("No navigation is active")
+        self.active_goal = None
+        self._reset_empty()
+        self.state_machine.transition_to(MappingState.IDLE)
 
     def navigation_failed(self) -> None:
         """Record navigation failure and enter recovery."""

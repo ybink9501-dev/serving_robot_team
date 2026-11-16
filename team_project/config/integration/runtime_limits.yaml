@@ -1,13 +1,13 @@
 arrival:
-  fine_engage_max_m: 0.2
+  fine_engage_max_m: 0.4
   fine_timeout_s: 120.0
   xy_tolerance_m: 0.1
-  control_xy_target_m: 0.04
+  localization_margin_m: 0.03
   yaw_tolerance_rad: 0.25
   settle_s: 0.5
   settle_linear_mps: 0.015
   settle_angular_rps: 0.05
-  control_yaw_target_rad: 0.18
+  control_yaw_target_rad: 0.08726646259971647
 fleet:
   blocked_alert_s: 15.0
   robot_separation_m: 0.9

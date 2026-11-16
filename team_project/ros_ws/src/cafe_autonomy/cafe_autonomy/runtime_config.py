@@ -26,6 +26,9 @@ def load_limits(path):
         raise ValueError('Nav2 tolerance cannot exceed arrival acceptance')
     if config['arrival']['xy_tolerance_m'] > config['arrival']['fine_engage_max_m']:
         raise ValueError('Fine engagement must cover arrival tolerance')
+    margin=config['arrival'].get('localization_margin_m',0.)
+    if isinstance(margin,bool) or not isinstance(margin,(int,float)) or not math.isfinite(margin) or not 0<=margin<config['arrival']['xy_tolerance_m']:
+        raise ValueError('Invalid localization margin')
     control_target=config['arrival'].get('control_xy_target_m',config['arrival']['xy_tolerance_m'])
     if not isinstance(control_target,(int,float)) or isinstance(control_target,bool) or not math.isfinite(control_target) or not 0 < control_target <= config['arrival']['xy_tolerance_m']:
         raise ValueError('Internal fine control target must be positive and within arrival acceptance')

@@ -2,6 +2,7 @@
 
 import math
 import time
+from serving_robot_mapping.mapping_edge_observation import matches_probe,attempts_at,can_observe_in_place,observation_endpoint_matches
 from typing import Optional
 
 import rclpy
@@ -75,6 +76,18 @@ class ExplorationManager(Node):
 
     def __init__(self) -> None:
         super().__init__("exploration_manager")
+
+        self.declare_parameter("mapping.wall_first", False)
+        self.declare_parameter("mapping.evidence_directory", "")
+        self.wall_first_enabled = bool(self.get_parameter("mapping.wall_first").value)
+        self.mapping_evidence_directory = self.get_parameter("mapping.evidence_directory").value
+        self.perimeter_plan = None
+        self.declare_parameter("mapping.boundary_contract", "")
+        domain_path = self.get_parameter("mapping.boundary_contract").value
+        self.mapping_domain = None
+        if domain_path:
+            from serving_robot_mapping.mapping_domain import load_domain
+            self.mapping_domain = load_domain(domain_path)
 
         self.declare_parameter(
             "robot_id",
@@ -606,6 +619,112 @@ class ExplorationManager(Node):
             angular_velocity=msg.twist.twist.angular.z,
         )
 
+    def update_perimeter_candidates(self, marker):
+        """Propose a wall circuit through the existing planner/safety chain."""
+        if not getattr(self, "wall_first_enabled", False):
+            return False
+        if marker.action != Marker.ADD or marker.type not in (Marker.POINTS, Marker.SPHERE_LIST):
+            return False
+        state = self.state_machine.state
+        if state not in (MappingState.EXPLORING, MappingState.EXPLORATION_BLOCKED):
+            return False
+        grid = self.frontier_clearance_guard.grid
+        if grid is None:
+            return True
+        from serving_robot_mapping.mapping_perimeter import PerimeterPlan, perimeter_routes
+        if self.perimeter_plan is None:
+            try:
+                tf = self.tf_buffer.lookup_transform("map", "base_footprint", Time())
+                xy = (tf.transform.translation.x, tf.transform.translation.y)
+                routes, detail = perimeter_routes(grid, xy)
+            except (TransformException, ValueError) as exc:
+                self.get_logger().warn("Wall-first proposal unavailable: " + str(exc))
+                return True
+            if not routes:
+                empty = Marker()
+                empty.header.frame_id = 'map'
+                empty.action = Marker.ADD
+                empty.type = Marker.SPHERE_LIST
+                self.planner_client.update_candidates(empty)
+                since = getattr(self, '_perimeter_unavailable_since', None)
+                if since is None:self._perimeter_unavailable_since = time.monotonic()
+                elif time.monotonic()-since>=10. and state!=MappingState.EXPLORATION_BLOCKED:
+                    self.state_machine.transition_to(MappingState.EXPLORATION_BLOCKED)
+                    self.get_logger().warn('EXPLORATION_BLOCKED: OUTER_WALL_SEED_UNREACHABLE; ' + str(detail))
+                return True
+            self.perimeter_plan = PerimeterPlan(routes)
+            self._perimeter_reference_area = detail['safe_component_cells'] * grid[3]**2
+            self._perimeter_history = []
+            self.get_logger().info("WALL_CIRCUIT_INITIALIZED: " + str(detail))
+        revision = self.freshness_monitor.map_revision
+        # The first visible free envelope is often only a small part of the room.
+        # Rebuild the outer circuit after material expansion, not after every
+        # scan's sub-cell noise. The budget is one robot-center envelope area.
+        if (self.perimeter_plan.closed_loops and
+                revision != getattr(self, '_perimeter_expansion_checked', None)):
+            try:
+                tf = self.tf_buffer.lookup_transform('map', 'base_footprint', Time())
+                routes, detail = perimeter_routes(grid, (tf.transform.translation.x, tf.transform.translation.y))
+            except (TransformException, ValueError) as exc:
+                self.get_logger().warn('Expanded wall circuit waiting for valid pose: ' + str(exc))
+                return True
+            self._perimeter_expansion_checked = revision
+            from serving_robot_mapping.mapping_geometry import MappingGeometry
+            area = detail.get('safe_component_cells', 0) * grid[3]**2
+            expansion_budget = math.pi * MappingGeometry(resolution=grid[3]).perimeter_radius**2
+            if routes and area > self._perimeter_reference_area + expansion_budget:
+                old = self.perimeter_plan.snapshot()
+                self._perimeter_history.append(old)
+                deferred = {tuple(p['xy']):p for p in old['ledger']}
+                pending = [xy for xy,p in deferred.items() if p['status']=='DEFERRED']
+                if pending:routes.append(dict(kind='DEFERRED_OBSERVATION',points=pending,length_m=None))
+                self.perimeter_plan = PerimeterPlan(routes)
+                self._perimeter_reference_area = area
+                self.get_logger().info('WALL_CIRCUIT_EXPANDED: ' + str(detail))
+        self.perimeter_plan.retry_deferred(revision)
+        if self.perimeter_plan.finished and not self.perimeter_plan.outer_return_failed:
+            return False
+        candidates = self.perimeter_plan.candidate(
+            self.frontier_clearance_guard.goal_clear,
+            getattr(self, "_r16_171b_rejected", set()), revision)
+        from geometry_msgs.msg import Point
+        import copy
+        forwarded = copy.deepcopy(marker)
+        forwarded.type = Marker.SPHERE_LIST
+        forwarded.points = [Point(x=x, y=y, z=0.) for x, y in candidates]
+        if candidates:
+            self._no_viable_since = None
+            if state == MappingState.EXPLORATION_BLOCKED:
+                self.state_machine.transition_to(MappingState.EXPLORING)
+        elif self.perimeter_plan.outer_return_failed:
+            self.state_machine.transition_to(MappingState.EXPLORATION_BLOCKED)
+            self.get_logger().warn("EXPLORATION_BLOCKED: OUTER_WALL_RETURN_UNREACHABLE; MAP_COMPLETE not asserted")
+        self.write_perimeter_evidence()
+        self.planner_client.update_candidates(forwarded)
+        return True
+
+    def write_perimeter_evidence(self):
+        plan = getattr(self, "perimeter_plan", None)
+        if plan is None:
+            return
+        import json
+        from pathlib import Path
+        snapshot = plan.snapshot()
+        snapshot['previous_cycles'] = getattr(self, '_perimeter_history', [])
+        snapshot['reference_safe_area_m2'] = getattr(self, '_perimeter_reference_area', None)
+        signature = (len(getattr(self, "_perimeter_history", [])), plan.loop, plan.point, len(plan.ledger), plan.outer_return_failed)
+        if signature == getattr(self, "_perimeter_evidence_signature", None):
+            return
+        self._perimeter_evidence_signature = signature
+        self.get_logger().info("WALL_CIRCUIT_STATE: " + json.dumps(snapshot))
+        folder = getattr(self, "mapping_evidence_directory", "")
+        if folder:
+            target = Path(folder) / "mapping_perimeter_state.json"
+            temp = target.with_suffix(".tmp")
+            temp.write_text(json.dumps(snapshot, indent=2))
+            temp.replace(target)
+
+
     def mapping_update_candidates(self, marker):
         """Expand Frontier viewpoints BEFORE Nav2 path verification."""
         if (
@@ -636,6 +755,15 @@ class ExplorationManager(Node):
             self._r16_171b_refresh_pending = False
 
         self._r16_171b_marker = marker
+
+        if getattr(getattr(self,'observation_sweep',None),'busy',False):return
+        # One active Nav2 goal needs no parallel candidate/path preview work.
+        if (getattr(getattr(self, 'state_machine', None), 'state', None) == MappingState.NAVIGATING
+                and getattr(getattr(self, 'navigation_client', None), 'busy', False)):
+            return
+        if (getattr(self, 'wall_first_enabled', False)
+                and self.update_perimeter_candidates(marker)):
+            return
 
         groups = []
 
@@ -823,7 +951,7 @@ class ExplorationManager(Node):
                 if (round(vx, 2), round(vy, 2)) in seen:
                     continue
 
-                if any(
+                if not matches_probe(self,vx,vy) and any(
                     math.hypot(vx - px, vy - py) <= 0.25
                     for px, py in visited
                 ):
@@ -841,10 +969,8 @@ class ExplorationManager(Node):
 
             if (
                 not selected
-                and now >= getattr(
-                    self, "_visibility_fallback_retry_after",
-                    0.0,
-                )
+                and (getattr(getattr(self,'_observation_worker',None),'future',None) is not None
+                     or now >= getattr(self,"_visibility_fallback_retry_after",0.0))
             ):
                 self._visibility_fallback_retry_after = (
                     now + 15.0
@@ -865,6 +991,8 @@ class ExplorationManager(Node):
                     # conditions every 15 seconds.
                     scan_key = (
                         hash(grid),
+                        tuple(sorted(getattr(self,'_r16_171b_rejected',()))),
+                        tuple(getattr(self,'_inspection_memory',())) ,
                         round(robot.x, 1),
                         round(robot.y, 1),
                         tuple(
@@ -878,19 +1006,41 @@ class ExplorationManager(Node):
                         "_visibility_fallback_last_scanned_context",
                         None,
                     ):
-                        fallback, metrics = select_visibility_fallback(
-                            grid=grid,
-                            robot_xy=(robot.x, robot.y),
-                            visited=visited,
-                            goal_clear=(
-                                self.frontier_clearance_guard.goal_clear
-                            ),
-                            max_results=8,
-                        )
+                        from serving_robot_mapping.mapping_visibility_worker import VisibilityWorker
+                        worker=getattr(self,'_observation_worker',None)
+                        if worker is None:
+                            worker=VisibilityWorker();self._observation_worker=worker
+                        result=worker.poll(scan_key,grid,(robot.x,robot.y),visited,
+                            self.frontier_clearance_guard.goal_clearance,
+                            self.frontier_clearance_guard.start_clearance,
+                            getattr(self,'observed_lidar_range_m',5.0),
+                            getattr(self,'_inspection_memory',()),
+                            tuple(getattr(self,'_r16_171b_rejected',())))
+                        if result is None:
+                            self._no_viable_since=None
+                            empty=type(marker)();empty.header=marker.header;empty.type=marker.SPHERE_LIST;empty.action=marker.DELETE
+                            self.planner_client.update_candidates(empty)
+                            return
+                        source_scan_key,(fallback,metrics)=result
+                        returned_edge=bool(metrics.get('edge_probes'))
+                        self._edge_probe_goals=[p for p in metrics.get('edge_probes',[])
+                            if attempts_at(*p['xy'],getattr(self,'_inspection_memory',()))<3]
+                        if returned_edge:fallback=[(x,y) for x,y in fallback if matches_probe(self,x,y)]
+                        if self._edge_probe_goals:
+                            self.get_logger().info('EDGE_OBSERVATION_PROPOSALS: '+str(self._edge_probe_goals))
+                        # Old snapshots propose observations only. Revalidate against
+                        # the current map/history, then require the actual Nav2 path.
+                        fallback=[(x,y) for x,y in fallback
+                            if self.frontier_clearance_guard.goal_clear(x,y)[0]
+                            and (matches_probe(self,x,y) or not any(math.hypot(x-vx,y-vy)<=.25 for vx,vy in visited))]
 
                         self._visibility_fallback_cache = (
                             tuple(fallback)
                         )
+                        nearby=next((p for p in self._edge_probe_goals if can_observe_in_place((robot.x,robot.y),p['xy'],getattr(self,'_inspection_memory',()))),None)
+                        if nearby is not None and self.frontier_clearance_guard.goal_clear(robot.x,robot.y)[0]:
+                            self.begin_observation((robot.x,robot.y),nearby)
+                            return
                         selected.extend(
                             (vx, vy)
                             for vx, vy in fallback
@@ -919,7 +1069,7 @@ class ExplorationManager(Node):
                             "Nav2 path and live safety still required."
                         )
 
-                        self._visibility_fallback_last_scanned_context = scan_key
+                        self._visibility_fallback_last_scanned_context = source_scan_key
 
                 except Exception as exc:
                     # Fail closed: no unverified navigation goal.
@@ -978,7 +1128,7 @@ class ExplorationManager(Node):
             and getattr(
                 self.frontier_clearance_guard, "grid", None
             ) is not None
-            and getattr(self, "last_frontier_count", 0) > 0
+            and (getattr(self, "last_frontier_count", None) or 0) > 0
             and current_state == MappingState.EXPLORING
         ):
             now = time.monotonic()
@@ -989,7 +1139,9 @@ class ExplorationManager(Node):
 
             elif now - since >= 10.0:
                 reason = (
-                    "VISITED_VIEWPOINTS_ONLY"
+                    "PATH_SCREEN_EXHAUSTED"
+                    if getattr(self, "_r16_171b_rejected", ())
+                    else "VISITED_VIEWPOINTS_ONLY"
                     if any(groups)
                     else "NO_CLEARANCE_QUALIFIED_VIEWPOINT"
                 )
@@ -1019,6 +1171,10 @@ class ExplorationManager(Node):
             )
 
     def mapping_guard_scan_callback(self, msg):
+        measured_range = getattr(msg, 'range_max', None)
+        if measured_range is not None and math.isfinite(measured_range) and measured_range > 0:
+            self.observed_lidar_range_m = float(measured_range)
+
         self.navigation_start_scan = msg
         self.navigation_start_scan_wall = time.monotonic()
 
@@ -1081,7 +1237,8 @@ class ExplorationManager(Node):
         # Do not repeatedly navigate to a reached frontier.
         eligible = [
             goal for goal in verified_goals
-            if all(
+            if matches_probe(self,goal.x,goal.y) or (getattr(self, 'perimeter_plan', None) is not None
+                and self.perimeter_plan.matches(goal.x, goal.y)) or all(
                 math.hypot(goal.x - x, goal.y - y) > 0.25
                 for x, y in self.visited_frontiers
             )
@@ -1110,6 +1267,7 @@ class ExplorationManager(Node):
             self.navigation_enabled
             and getattr(self, "_mapping_guard_required", False)
         ):
+            before_clearance_count = len(eligible)
             clearance_ok = []
 
             for goal in eligible:
@@ -1130,10 +1288,10 @@ class ExplorationManager(Node):
             eligible = clearance_ok
 
             if not eligible:
-                self.get_logger().warn(
-                    "No clearance-qualified Frontier; "
-                    "no Nav2 goal dispatched."
-                )
+                if before_clearance_count:
+                    self.get_logger().warn("All eligible Frontier goals rejected by current clearance; no Nav2 goal dispatched.")
+                else:
+                    self.get_logger().debug("Awaiting planner-eligible Frontier; clearance rejection is not established.")
                 return
 
         # R16_170B_ACTUAL_PLANNER_PATH_SCREEN
@@ -1154,6 +1312,13 @@ class ExplorationManager(Node):
             # the known-unsafe actual paths within the same revision.
             rejected = set(getattr(self, "_r16_171b_rejected", ()))
             for candidate in eligible:
+                if matches_probe(self,candidate.x,candidate.y) and not observation_endpoint_matches(
+                    (candidate.x,candidate.y),getattr(candidate,'path_points',None)):
+                    rejected.add((round(candidate.x,2),round(candidate.y,2)))
+                    self.get_logger().warn('OBSERVATION_PATH_ENDPOINT_MISMATCH: '+str(dict(
+                        requested=[candidate.x,candidate.y],endpoint=candidate.path_points[-1] if candidate.path_points else None,
+                        tolerance_m=.02,map_revision=self.freshness_monitor.map_revision)))
+                    continue
                 result = path_guard.check_path(
                     getattr(candidate, "path_points", None)
                     if grid_ready else None
@@ -1165,7 +1330,12 @@ class ExplorationManager(Node):
                     self.get_logger().warn(
                         "Frontier rejected by Mapping path screen: "
                         f"({candidate.x:.2f}, {candidate.y:.2f}) "
-                        f"{result.reason}; samples={result.samples}"
+                        f"{result.reason}; samples={result.samples}; "
+                        f"failure_point={result.failure_point}; "
+                        f"risk_cell={result.risk_cell}; "
+                        f"risk_distance={result.risk_cell_distance_m}; "
+                        f"minimum_occupied_distance={result.minimum_occupied_distance_m}; "
+                        f"map_revision={self.freshness_monitor.map_revision}"
                     )
             self._r16_171b_rejected = rejected
             if not path_approved:
@@ -1200,6 +1370,12 @@ class ExplorationManager(Node):
             return
 
         self.planner_verified_goal = selected
+
+        plan = getattr(self, 'perimeter_plan', None)
+        if plan is not None and plan.matches(selected.x, selected.y):
+            from dataclasses import replace
+            selected = replace(selected, yaw=plan.tangent_yaw())
+            self.planner_verified_goal = selected
 
         if not self.navigation_enabled:
             self.get_logger().info(
@@ -1468,6 +1644,11 @@ class ExplorationManager(Node):
             return
 
         if outcome == "SUCCEEDED":
+            plan = getattr(self, 'perimeter_plan', None)
+            reached_perimeter=bool(plan is not None and goal is not None and plan.matches(goal.x,goal.y))
+            if plan is not None and goal is not None:
+                plan.arrived(goal.x, goal.y, self.freshness_monitor.map_revision)
+                self.write_perimeter_evidence()
             if goal is not None:
                 self.visited_frontiers.append(
                     (goal.x, goal.y)
@@ -1478,6 +1659,12 @@ class ExplorationManager(Node):
 
             self.goal_manager.navigation_succeeded()
             self.request_navigation_replan()
+            if getattr(self,'mapping_lidar_only',False) and not (plan is not None and plan.matches(goal.x,goal.y)):
+                probe=next((p for p in getattr(self,'_edge_probe_goals',()) if math.hypot(p['xy'][0]-goal.x,p['xy'][1]-goal.y)<.03),None)
+                # Perimeter.arrived advances its active point, so the explicit
+                # reached-perimeter flag below prevents an unnecessary sweep.
+                if not reached_perimeter:self.begin_observation((goal.x,goal.y),probe)
+
 
             if (
                 self.navigation_max_goals > 0
@@ -1487,6 +1674,12 @@ class ExplorationManager(Node):
                     "Single-run goal limit reached. "
                     "No additional goals will be sent."
                 )
+            return
+
+        if (outcome == 'CANCELED' and reason.startswith('Mapping Explorer shutting down;')
+                and 'terminal status=5' in reason and 'cancel response=ACCEPTED' in reason):
+            self.goal_manager.navigation_stopped()
+            self.get_logger().info('MAPPING_SESSION_STOPPED_UNFINISHED: confirmed session cancellation')
             return
 
         self.goal_manager.navigation_failed()
@@ -1560,6 +1753,49 @@ class ExplorationManager(Node):
             f"{outcome}. Manual restart required."
         )
 
+
+    def begin_observation(self,xy,proposal=None):
+        if getattr(getattr(self,'observation_sweep',None),'busy',False):return
+        from serving_robot_mapping.mapping_observation_sweep import ObservationSweep
+        if getattr(self,'observation_sweep',None) is None:
+            self.observation_sweep=ObservationSweep(self,self.observation_finished)
+        self._observation_pose=tuple(xy);self._observation_proposal=proposal
+        self._observation_unknown_before=sum(v<0 for v in self.frontier_clearance_guard.grid[0])
+        self.state_machine.transition_to(MappingState.OBSERVING)
+        self._no_viable_since=None
+        self.get_logger().info('MAPPING_OBSERVATION_STARTED: '+str(dict(xy=xy,proposal=proposal)))
+        self.observation_sweep.start()
+
+    def observation_finished(self,okay,reason,events):
+        import json
+        from pathlib import Path
+        xy=self._observation_pose
+        try:
+            tf=self.tf_buffer.lookup_transform('map','base_footprint',Time())
+            xy=(tf.transform.translation.x,tf.transform.translation.y)
+        except TransformException:
+            okay=False;reason='OBSERVATION_POSE_UNVERIFIED'
+        from serving_robot_mapping.mapping_observation_memory import record_observation
+        self._inspection_memory=record_observation(
+            getattr(self,'_inspection_memory',()),xy,self._observation_proposal)
+        unknown=sum(v<0 for v in self.frontier_clearance_guard.grid[0])
+        record=dict(xy=xy,success=okay,reason=reason,events=events,
+                    unknown_before=self._observation_unknown_before,unknown_after=unknown,
+                    proposal=self._observation_proposal)
+        self.get_logger().info('MAPPING_OBSERVATION_RESULT: '+json.dumps(record))
+        folder=getattr(self,'mapping_evidence_directory','')
+        if folder:
+            path=Path(folder)/'mapping_observations.jsonl';path.parent.mkdir(parents=True,exist_ok=True)
+            with path.open('a') as stream:stream.write(json.dumps(record)+'\n')
+        self._edge_probe_goals=[];self._visibility_fallback_cache=()
+        self._visibility_fallback_last_scanned_context=None;self._visibility_fallback_retry_after=0.
+        if okay:
+            self.state_machine.transition_to(MappingState.EXPLORING);self.request_navigation_replan()
+        elif reason=='Mapping Explorer shutting down':
+            self.state_machine.transition_to(MappingState.IDLE)
+        else:
+            self.state_machine.transition_to(MappingState.ERROR)
+            self.get_logger().error('MAPPING_OBSERVATION_FAILED: '+reason)
 
     def mapping_navigation_safety_check(self):
         """Use unchanged live gate and record rejection."""
@@ -1869,6 +2105,17 @@ class ExplorationManager(Node):
             )
             return
 
+        if getattr(self, "mapping_domain", None) is not None:
+            import copy
+            from serving_robot_mapping.mapping_domain import apply_domain
+            msg = copy.deepcopy(msg)
+            p = msg.info.origin.position
+            q = msg.info.origin.orientation
+            msg.data, self.mapping_domain_counts = apply_domain(
+                msg.data, int(msg.info.width), int(msg.info.height),
+                float(msg.info.resolution), p.x, p.y,
+                quaternion_to_yaw(q.x, q.y, q.z, q.w), self.mapping_domain)
+
         origin = msg.info.origin
         q = origin.orientation
 
@@ -1922,6 +2169,18 @@ class ExplorationManager(Node):
                 origin_yaw,
             )
             self.visited_frontiers = restored
+            from serving_robot_mapping.mapping_observation_memory import restore_observation_memory
+            self._inspection_memory=restore_observation_memory(self._r16_214_resume_report)
+            if getattr(self,'mapping_evidence_directory',''):
+                import json,hashlib
+                from pathlib import Path
+                source=Path(self._r16_214_resume_report).resolve()
+                target=Path(self.mapping_evidence_directory)/'mapping_observation_resume.json'
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_text(json.dumps(dict(source_report=str(source),source_sha256=hashlib.sha256(source.read_bytes()).hexdigest())))
+
+            self.get_logger().info('OBSERVATION_HISTORY_RESTORED: '+str(self._inspection_memory))
+
             self._r16_214_resume_pending = False
             self.get_logger().info(
                 "R16-214 VISITED_HISTORY_RESTORED: "
@@ -1990,6 +2249,15 @@ class ExplorationManager(Node):
                     "Frontiers disappeared; resuming "
                     "independent completion checking."
                 )
+
+        # A closed wall circuit is distinct from a completed occupancy map.
+        if getattr(self, 'wall_first_enabled', False):
+            marker = Marker()
+            marker.header.frame_id = 'map'
+            marker.action = Marker.ADD
+            marker.type = Marker.POINTS
+            if self.update_perimeter_candidates(marker):
+                frontier_count = max(frontier_count, 1)
 
         previous_state = self.state_machine.state
 
@@ -2154,6 +2422,11 @@ class ExplorationManager(Node):
             pass
 
     def destroy_node(self) -> bool:
+        worker=getattr(self,'_observation_worker',None)
+        if worker is not None:worker.close()
+        sweep=getattr(self,'observation_sweep',None)
+        if sweep is not None:sweep.close()
+
         """Request Nav2 cancellation before node shutdown."""
         client = getattr(self, "navigation_client", None)
         if client is not None and client.busy:
@@ -2182,6 +2455,13 @@ def _r16_203_settle_navigation(
     Client becoming idle is not independent proof of physical
     stopping or a particular Nav2 terminal action status.
     """
+    sweep=getattr(node,'observation_sweep',None)
+    if sweep is not None and sweep.busy:
+        node.navigation_enabled=False;sweep.cancel('Mapping Explorer shutting down')
+        until=now_fn()+10.
+        while sweep.busy and context_ok_fn() and now_fn()<until:
+            node.stop_robot();spin_once_fn(node,timeout_sec=.05)
+        if sweep.busy:return 'OBSERVATION_CANCEL_UNCONFIRMED'
     client = getattr(node, "navigation_client", None)
 
     if client is None or not client.busy:
@@ -2229,6 +2509,9 @@ def _r16_203_settle_navigation(
     if client.busy:
         return "CANCEL_UNCONFIRMED"
 
+    if (getattr(client, 'last_terminal_status', None) == 5
+            and getattr(client, 'last_cancel_ack', None) == 'ACCEPTED'):
+        return "CANCEL_CONFIRMED_TERMINAL"
     return "CLIENT_IDLE_TERMINAL_STATUS_NOT_INDEPENDENTLY_VERIFIED"
 
 

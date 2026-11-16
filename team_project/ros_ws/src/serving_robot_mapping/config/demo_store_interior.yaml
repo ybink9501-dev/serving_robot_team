@@ -1,0 +1,16 @@
+schema_version: 1
+frame_id: map
+site_id: demo_lidar_complete_final
+operator_approved: true
+approval_basis: "User approved cafe interior only and treating the south entrance as closed in this chat. No operating-map promotion approved."
+geometry_basis: "cafe.world.sdf inner wall faces; world_to_map translation [3.2, 2.25], yaw 0. This is an operational exclusion, not LiDAR evidence."
+interior_polygon:
+  - [-0.74, -0.69]
+  - [7.14, -0.69]
+  - [7.14, 5.19]
+  - [-0.74, 5.19]
+closed_portals:
+  - id: south_entrance
+    segment: [[3.6, -0.75], [5.3, -0.75]]
+    physical_state: open
+    mapping_policy: operator_approved_closed

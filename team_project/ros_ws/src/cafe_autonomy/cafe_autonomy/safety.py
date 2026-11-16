@@ -23,6 +23,7 @@ class Safety(Node):
         self.cmd_nav=Twist();self.cmd_fine=Twist()
         self.nav_stamp=0;self.fine_stamp=0;self.scan_stamp=0
         self.fine=False;self.hold=True;self.people=[];self.xy=None
+        self.pending_scan=None;self.scan_input_age=None;self.future_scan_count=0;self.accepted_scan_count=0
         self.person_stationary_start={}
         self.output=self.create_publisher(Twist,'cmd_vel_semantic',10)
         self.status=self.create_publisher(String,'safety_status',10)
@@ -62,11 +63,24 @@ class Safety(Node):
             self.last_mission_state=state
         except Exception:self.mission_moving=False
     def on_scan(self,msg):
-        # A finite, plausible scan proves sensor freshness; polygon-level safety is
-        # handled separately by Nav2 Collision Monitor. Do not call a wall a person.
         age=(self.get_clock().now().nanoseconds-(msg.header.stamp.sec*10**9+msg.header.stamp.nanosec))*1e-9
-        if 0.<=age<self.safe_cfg['scan_timeout_s'] and msg.header.frame_id==self.robot+'/laser_link' and msg.ranges and msg.range_max>msg.range_min and any(math.isfinite(v) and msg.range_min<=v<=msg.range_max for v in msg.ranges):
-            self.scan_stamp=time.monotonic()
+        self.scan_input_age=age
+        if age<0.:self.future_scan_count+=1
+        self.pending_scan=(msg,time.monotonic())
+        Safety.validate_pending_scan(self)
+    def validate_pending_scan(self):
+        pending=self.pending_scan
+        if pending is None:return
+        msg,received=pending;wall_age=time.monotonic()-received
+        age=(self.get_clock().now().nanoseconds-(msg.header.stamp.sec*10**9+msg.header.stamp.nanosec))*1e-9
+        valid=(msg.header.frame_id==self.robot+'/laser_link' and bool(msg.ranges)
+               and msg.range_max>msg.range_min
+               and any(math.isfinite(v) and msg.range_min<=v<=msg.range_max for v in msg.ranges))
+        if not valid or wall_age>=self.safe_cfg['scan_timeout_s'] or age>=self.safe_cfg['scan_timeout_s']:
+            self.pending_scan=None;return
+        if age<0.:return  # /clock may follow the scan; do not accept future data.
+        self.scan_stamp=received  # Rechecking never extends wall-clock freshness.
+        self.accepted_scan_count+=1;self.pending_scan=None
     def on_odom(self,msg):
         p=msg.pose.pose.position;q=msg.pose.pose.orientation
         angle=math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))
@@ -103,6 +117,7 @@ class Safety(Node):
         self.people_stamp=now
 
     def tick(self):
+        Safety.validate_pending_scan(self)
         now=time.monotonic();fresh=now-self.scan_stamp<self.safe_cfg['scan_timeout_s']
         source_stamp=self.fine_stamp if self.fine else self.nav_stamp
         cmd=self.cmd_fine if self.fine else self.cmd_nav
@@ -136,8 +151,8 @@ class Safety(Node):
             result.linear.x=max(lower,min(upper,result.linear.x))
         self.output_v=result.linear.x;self.last_output_s=clock
         self.output.publish(result)
-        message={'robot_id':self.robot,'sensor_fresh':fresh,'rotation':self.rotation.snapshot(),'policy_time_s':self.dynamic_report.get('time_s'),'command_time_s':clock,'command_wall_time':time.time(),'output_v':result.linear.x,'output_w':result.angular.z,'traffic_hold':self.hold,
-                 'dynamic_fresh':dynamic_ok,'dynamic_stage':self.dynamic_report.get('stage'),'dynamic_stop':self.dynamic_report.get('stop',True),'detector_fresh':detector_ok,'fleet_fresh':fleet_ok,'zone_speed_ratio':self.zone_ratio,'people_motion':{str(i):{'speed_mps':self.track_velocity.get(i,0.),'stationary_for_s':now-self.people_stationary.get(i,now)} for i in self.people_last},'person_distance_m':dmin,'state':('ROTATION_LIMIT' if not rotation_ok else 'STOP' if not valid or fac==0 else
+        message={'robot_id':self.robot,'sensor_fresh':fresh,'scan_input_age_s':self.scan_input_age,'future_scan_count':self.future_scan_count,'accepted_scan_count':self.accepted_scan_count,'rotation':self.rotation.snapshot(),'policy_time_s':self.dynamic_report.get('time_s'),'command_time_s':clock,'command_wall_time':time.time(),'output_v':result.linear.x,'output_w':result.angular.z,'traffic_hold':self.hold,
+                 'dynamic_fresh':dynamic_ok,'dynamic_stage':self.dynamic_report.get('stage'),'dynamic_stop':self.dynamic_report.get('stop',True),'detector_fresh':detector_ok,'fleet_fresh':fleet_ok,'zone_speed_ratio':self.zone_ratio,'people_motion':{str(i):{'speed_mps':self.track_velocity.get(i,0.),'stationary_for_s':now-self.people_stationary.get(i,now)} for i in self.people_last},'person_distance_m':dmin,'person_control_distance_m':self.dynamic_report.get('front_person_m'),'state':('ROTATION_LIMIT' if not rotation_ok else 'STOP' if not valid or fac==0 else
                  'SLOW' if fac<1 else 'NORMAL'),'fine':self.fine}
         self.status.publish(String(data=json.dumps(message)))
 

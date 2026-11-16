@@ -60,6 +60,7 @@ export const ENTITY_TYPE_LABEL: Record<EntityType, string> = {
 export const ZONE_NOT_APPLIED_NOTE = '구역은 지금 저장만 되고 로봇 동작에는 아직 반영되지 않아요.'
 
 export const ZONE_TYPE_LABEL: Record<ZoneType, string> = {
+  operating: '운영 구역',
   exclusive: '전용 구역',
   no_go: '진입 금지',
   slow: '감속 구역',

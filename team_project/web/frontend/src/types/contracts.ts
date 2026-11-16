@@ -112,7 +112,7 @@ export interface Waypoint {
   pose: Pose
 }
 
-export const ZONE_TYPES = ['exclusive', 'no_go', 'slow'] as const
+export const ZONE_TYPES = ['exclusive', 'no_go', 'slow', 'operating'] as const
 export type ZoneType = (typeof ZONE_TYPES)[number]
 
 /** [x, y] (m, map frame) */

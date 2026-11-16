@@ -11,6 +11,7 @@ const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: '/', label: '대시보드', icon: 'dashboard' },
   { to: '/map', label: '지도 설정', icon: 'map' },
   { to: '/robots', label: '로봇 관제', icon: 'robot' },
+  { to: '/personal', label: '개인 Fleet 관제', icon: 'robot' },
 ]
 
 export function AppLayout() {

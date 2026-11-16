@@ -1,0 +1,50 @@
+site_id: validation_preentry_ack
+map_yaml: maps/stores/validation_cafe/lidar_map.yaml
+waypoints_file: config/integration/sites/validation_meeting_waypoints.yaml
+zones_file: config/integration/sites/validation_preentry_zones.yaml
+robots:
+  robot_01:
+    x: -2.2
+    y: 0.0
+    yaw: 0.0
+    map_x: 1.8
+    map_y: 2.0
+    map_yaw: 0.0
+  robot_02:
+    x: 2.2
+    y: 0.0
+    yaw: 3.141592653589793
+    map_x: 6.2
+    map_y: 2.0
+    map_yaw: 3.141592653589793
+world_to_map:
+  x: 4.0
+  y: 2.0
+  yaw: 0.0
+people:
+  enabled: false
+  config: config/integration/sites/validation_people.yaml
+world_file: ros_ws/src/cafe_autonomy/worlds/validation_cafe.world.sdf
+static_world_geometry: false
+mapping_route:
+- - 1.8
+  - 2.0
+- - 6.2
+  - 2.0
+- - 8.0
+  - 0.0
+- - 8.0
+  - 4.0
+- - 6.2
+  - 2.0
+- - 1.8
+  - 2.0
+- - 0.0
+  - 3.5
+- - 1.0
+  - 3.9
+- - 0.0
+  - 3.5
+- - 0.0
+  - 0.0
+auto_home_when_idle: false

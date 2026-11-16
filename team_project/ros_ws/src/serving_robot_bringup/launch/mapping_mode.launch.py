@@ -106,7 +106,14 @@ def _chain(steps, idx=0):
     return out
 
 
+def mapping_param_files(context):
+    # Resolve while the include scope exists, before delayed stage callbacks.
+    return (LaunchConfiguration('slam_params_file').perform(context),
+            LaunchConfiguration('nav2_params_file').perform(context))
+
+
 def _build(context, *args, **kwargs):
+    slam_params_file, nav2_params_file = mapping_param_files(context)
     mode = LaunchConfiguration('mode').perform(context).strip().lower()
     if mode != 'sim':
         raise RuntimeError("mapping_mode supports mode:=sim only for now, got '%s'" % mode)
@@ -176,7 +183,7 @@ def _build(context, *args, **kwargs):
         'title': TAG + ' SLAM (slam_toolbox, mode mapping)',
         'actions': [include(
             os.path.join(nav, 'launch', 'mapping.launch.py'),
-            {'use_sim_time': 'true'})],
+            {'use_sim_time': 'true', 'slam_params_file': slam_params_file})],
         'wait': {
             'name': 'slam', 'args': ['--tf', 'map', 'odom', '--topic', '/map'],
             'timeout': timeout,
@@ -192,12 +199,13 @@ def _build(context, *args, **kwargs):
             os.path.join(nav, 'launch', 'navigation.launch.py'),
             {'use_sim_time': 'true', 'store': store,
              'localization': 'false', 'rviz': 'false',
+             'nav2_params_file': nav2_params_file,
              'person_limit': 'false', 'hold_recovery': 'true',
              'free_goal_yaw': 'true', 'home_name': '',
              'delivery_limit_s': '', 'auto_confirm_s': ''})],
         'wait': {
             'name': 'nav2',
-            'args': ['--lifecycle', 'controller_server',
+            'args': ['--lifecycle-request-timeout', '3.0', '--lifecycle', 'controller_server',
                      '--lifecycle', 'planner_server',
                      '--lifecycle', 'behavior_server',
                      '--lifecycle', 'bt_navigator',
@@ -243,6 +251,10 @@ def _build(context, *args, **kwargs):
 def generate_launch_description():
     bringup = get_package_share_directory('serving_robot_bringup')
     return LaunchDescription([
+        DeclareLaunchArgument('slam_params_file', default_value=os.path.join(
+            get_package_share_directory('serving_robot_navigation'),'config','slam.yaml')),
+        DeclareLaunchArgument('nav2_params_file', default_value=os.path.join(
+            get_package_share_directory('serving_robot_navigation'),'config','nav2.yaml')),
         DeclareLaunchArgument(
             'mode', default_value='sim',
             description='sim only for now (the real robot is not tested)'),
