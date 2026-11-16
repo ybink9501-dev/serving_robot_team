@@ -1,0 +1,7 @@
+image: R16-147_official_raw_map.pgm
+mode: raw
+resolution: 0.050
+origin: [-0.762, -0.850, 0]
+negate: 0
+occupied_thresh: 0.650
+free_thresh: 0.250

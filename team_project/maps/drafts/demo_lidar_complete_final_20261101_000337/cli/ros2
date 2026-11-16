@@ -1,0 +1,5 @@
+#!/usr/bin/python3
+import os,sys
+a=sys.argv[1:]
+if a==["node","list"]:a += ["--no-daemon","--spin-time","3"]
+os.execv('/opt/ros/jazzy/bin/ros2',["ros2"]+a)

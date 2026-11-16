@@ -12,6 +12,13 @@ person_release_radius_m: 1.0
 person_radius_m: 0.22
 person_height_m: 1.55
 seed: null
+# TEST mode only: centre of the south entrance opening in cafe.world.sdf.
+# The current entrance faces inward along +Y. Change these fields for another point.
+test_spawn:
+  x: 1.25
+  y: -3.0
+  yaw: 1.5707963267948966
+  wait_timeout_s: 60.0
 lanes:
 - start:
   - 0.0

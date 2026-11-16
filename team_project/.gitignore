@@ -27,15 +27,6 @@ rosbag2_*/
 ros_ws/src/serving_robot_navigation/maps/generated/*
 !ros_ws/src/serving_robot_navigation/maps/generated/.gitkeep
 
-
-
-
-
-# Machine-local assets, evidence and archived unused files
-/_local_only/
-
-# Development-only backups
-*.bak
-*.bak_before_*
-*.route_backup
-*.backup_*
+# Release archives and generated tool results
+dist/
+tools/site_builder/out/

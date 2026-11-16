@@ -1,0 +1,11 @@
+{
+  "upstream": "https://github.com/SteveMacenski/slam_toolbox",
+  "tag": "2.8.5",
+  "commit": "ec8f7635dea317b531c419f798f87d90a336f32e",
+  "patch_sha256": "1c9318559a921b3c52fa4b9fbe08629aee135cbeb49ecaad9d3515a18e9f7864",
+  "scope": "mapping-only overlay; /opt/ros unchanged",
+  "fixes": [
+    "include maximum observed endpoints",
+    "ROS origin denotes cell edge, Karto grid coordinates denote centers"
+  ]
+}

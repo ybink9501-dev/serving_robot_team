@@ -1,0 +1,54 @@
+{
+  "role": "mapping",
+  "stack": "unmodified TEAM mapping/exploration",
+  "same_robot_model": "serving_robot_description/urdf/serving_robot.urdf.xacro",
+  "robot": "robot_01",
+  "owner": {
+    "pid": 294,
+    "launch_pid": 398,
+    "log": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/mapping_20261031_234110.log",
+    "mode": "mapping",
+    "mapping_stack": "team",
+    "site_id": "demo_lidar_complete_final",
+    "config": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/config/system.yaml"
+  },
+  "error": null,
+  "runner_returncode": 1,
+  "startup": {
+    "nodes": [
+      "/behavior_server",
+      "/bt_navigator",
+      "/bt_navigator_navigate_to_pose_rclcpp_node",
+      "/collision_monitor",
+      "/controller_server",
+      "/dynamic_scan_filter",
+      "/frontier_visualizer",
+      "/hold_recovery",
+      "/launch_ros_398",
+      "/lifecycle_manager_navigation",
+      "/personal_mapping_session_observer",
+      "/planner_server",
+      "/robot_health",
+      "/robot_state_publisher",
+      "/route_executor",
+      "/serving_robot_bridge",
+      "/slam_toolbox",
+      "/soft_stop_limiter",
+      "/transform_listener_impl_5ee57c902030",
+      "/transform_listener_impl_6165220ad280",
+      "/transform_listener_impl_64b0763fd830",
+      "/velocity_smoother"
+    ],
+    "map_dimensions": [
+      158,
+      120
+    ],
+    "known_cells": 2801
+  },
+  "map_updates": 5,
+  "max_odom_displacement_m": 1.1508777783189758e-19,
+  "team_session_report": null,
+  "map_complete": false,
+  "raw_map_saved": false,
+  "operation_map_changed": false
+}

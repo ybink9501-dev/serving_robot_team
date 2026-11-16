@@ -1,0 +1,48 @@
+site_id: demo_lidar_complete_final
+map_yaml: maps/stores/demo_store/team_lidar_complete.yaml
+waypoints_file: config/integration/waypoints.yaml
+zones_file: config/integration/zones.yaml
+robots:
+  robot_01:
+    x: -3.2
+    y: -2.25
+    yaw: 0.0
+    map_x: 0.0
+    map_y: 0.0
+    map_yaw: 0.0
+  robot_02:
+    x: 2.4
+    y: -2.25
+    yaw: 3.141592653589793
+    map_x: 5.6
+    map_y: 0.0
+    map_yaw: 3.141592653589793
+world_to_map:
+  x: 3.2
+  y: 2.25
+  yaw: 0.0
+people:
+  enabled: false
+  config: ros_ws/src/serving_robot_person_simulator/config/policy_dual.yaml
+world_file: ros_ws/src/serving_robot_gazebo/worlds/cafe.world.sdf
+static_world_geometry: false
+mapping_route:
+- - 5.6
+  - 0.0
+- - 3.2
+  - 0.0
+- - 3.2
+  - 1.75
+- - 6.4
+  - 1.75
+- - 6.4
+  - 1.15
+- - 6.4
+  - 3.65
+- - 3.2
+  - 3.65
+- - 0.0
+  - 3.65
+- - 0.0
+  - 0.0
+auto_home_when_idle: true

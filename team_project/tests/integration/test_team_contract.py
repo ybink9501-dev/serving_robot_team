@@ -33,7 +33,13 @@ def test_actual_configuration_and_command_chain():
     for r in policy.ROBOT_IDS:
         path=root/'config/integration'/('nav2_'+r+'.yaml');text=path.read_text();assert '&id' not in text and '*id' not in text
         data=yaml.safe_load(text);c=data[f'/{r}/controller_server']['ros__parameters']
-        assert c['FollowPath']['plugin']=='nav2_mppi_controller::MPPIController'
+        if r=='robot_01':
+            assert c['FollowPath']['plugin']=='nav2_rotation_shim_controller::RotationShimController'
+            assert c['FollowPath']['primary_controller']=='nav2_mppi_controller::MPPIController'
+            assert c['FollowPath']['rotate_to_heading_angular_vel']<=.8
+            assert not c['FollowPath']['rotate_to_goal_heading']
+        else:
+            assert c['FollowPath']['plugin']=='nav2_mppi_controller::MPPIController'
         assert c['FollowPath']['vx_min']==0.;assert c['FollowPath']['vx_max']==.25;assert c['FollowPath']['wz_max']==.8
         assert c['general_goal_checker']['xy_goal_tolerance']==.1
         cm=data[f'/{r}/collision_monitor']['ros__parameters'];assert cm['cmd_vel_in_topic']=='cmd_vel_semantic';assert cm['cmd_vel_out_topic']=='cmd_vel'

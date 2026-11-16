@@ -9,13 +9,13 @@ WSL Ubuntu에서 기존 팀 저장소로 이동한다.
 
 ```bash
 cd team_project
-bash scripts/build.sh
-bash scripts/start_operation.sh
+bash scripts/build_autonomy.sh
+bash scripts/start_autonomy.sh
 ```
 
 화면 없이 시험하려면 마지막 명령에 `--headless`를 붙인다. 운영 화면은
 `http://localhost:8765`이다. 실행 종료는 실행 터미널의 Ctrl+C 또는 다른 터미널에서
-`bash scripts/stop.sh`를 사용한다. 관리 스크립트는 자기 프로세스 그룹만 종료한다.
+`bash scripts/stop_autonomy.sh`를 사용한다. 관리 스크립트는 자기 프로세스 그룹만 종료한다.
 기본 ROS Domain은 101, Gazebo partition은 `team_integration_101`이다.
 환경 변수로 다른 Domain/partition을 지정할 수 있다. 같은 partition의 중복 실행은 거절한다.
 
@@ -37,9 +37,9 @@ LAB `cafe_clean_step96` 원본도 변경하지 않았다. 현재 운행 지도�
 Mapping은 Operation을 먼저 종료한 다음 실행한다.
 
 ```bash
-bash scripts/start_mapping.sh
+bash scripts/start_autonomy_mapping.sh
 # 별도 터미널에서 저장. 동일 이름 덮어쓰기는 거절한다.
-bash scripts/save_map.sh cafe_new_scan
+bash scripts/save_autonomy_map.sh cafe_new_scan
 ```
 
 Mapping에는 Robot 01과 SLAM만 실행하며 AMCL/Nav2 운행 스택은 함께 실행하지 않는다.

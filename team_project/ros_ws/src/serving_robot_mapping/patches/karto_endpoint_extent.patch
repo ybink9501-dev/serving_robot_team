@@ -1,0 +1,41 @@
+diff --git a/include/slam_toolbox/visualization_utils.hpp b/include/slam_toolbox/visualization_utils.hpp
+index f021303..fce7554 100644
+--- a/include/slam_toolbox/visualization_utils.hpp
++++ b/include/slam_toolbox/visualization_utils.hpp
+@@ -115,13 +115,17 @@ inline void toNavMap(
+   karto::Vector2<kt_double> offset =
+     occ_grid->GetCoordinateConverter()->GetOffset();
+ 
++  // Karto rounds world coordinates to cell centers; ROS origin is a cell edge.
++  const double origin_x = offset.GetX() - occ_grid->GetResolution() * 0.5;
++  const double origin_y = offset.GetY() - occ_grid->GetResolution() * 0.5;
++
+   if (map.info.width != (unsigned int) width ||
+     map.info.height != (unsigned int) height ||
+-    map.info.origin.position.x != offset.GetX() ||
+-    map.info.origin.position.y != offset.GetY())
++    map.info.origin.position.x != origin_x ||
++    map.info.origin.position.y != origin_y)
+   {
+-    map.info.origin.position.x = offset.GetX();
+-    map.info.origin.position.y = offset.GetY();
++    map.info.origin.position.x = origin_x;
++    map.info.origin.position.y = origin_y;
+     map.info.width = width;
+     map.info.height = height;
+     map.data.resize(map.info.width * map.info.height);
+diff --git a/lib/karto_sdk/include/karto_sdk/Karto.h b/lib/karto_sdk/include/karto_sdk/Karto.h
+index cfce65d..b95e688 100644
+--- a/lib/karto_sdk/include/karto_sdk/Karto.h
++++ b/lib/karto_sdk/include/karto_sdk/Karto.h
+@@ -6108,8 +6108,8 @@ protected:
+     kt_double scale = 1.0 / resolution;
+     Size2<kt_double> size = boundingBox.GetSize();
+ 
+-    rWidth = static_cast<kt_int32s>(math::Round(size.GetWidth() * scale));
+-    rHeight = static_cast<kt_int32s>(math::Round(size.GetHeight() * scale));
++    rWidth = static_cast<kt_int32s>(math::Round(size.GetWidth() * scale)) + 1;
++    rHeight = static_cast<kt_int32s>(math::Round(size.GetHeight() * scale)) + 1;
+     rOffset = boundingBox.GetMinimum();
+   }
+ 

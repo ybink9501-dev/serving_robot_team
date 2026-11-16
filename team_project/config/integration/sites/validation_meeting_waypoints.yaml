@@ -1,0 +1,38 @@
+destinations:
+  robot_01_HOME:
+    x: 0.0
+    y: 0.0
+    yaw: 0.0
+  robot_02_HOME:
+    x: 8.0
+    y: 0.0
+    yaw: 3.141592653589793
+  kitchen:
+    x: 1.0
+    y: 3.9
+    yaw: 1.5707963267948966
+  table_A:
+    approaches:
+      south:
+        x: 2.0
+        y: 2.4
+        yaw: 1.5707963267948966
+  table_B:
+    approaches:
+      south:
+        x: 6.0
+        y: 2.4
+        yaw: 1.5707963267948966
+  meet_left:
+    x: 0.5
+    y: 2.0
+    yaw: 3.141592653589793
+  meet_right:
+    x: 7.5
+    y: 2.0
+    yaw: 0.0
+
+  human_lane_goal:
+    x: 0.0
+    y: 4.0
+    yaw: 1.5707963267948966

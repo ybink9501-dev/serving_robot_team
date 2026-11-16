@@ -6,6 +6,8 @@ clock (simulation seconds in Gazebo). No simulator truth enters this module.
 from collections import deque
 from dataclasses import dataclass,field
 import math
+import numpy as np
+from scipy.optimize import linear_sum_assignment
 
 
 def distance(a,b):return math.hypot(a[0]-b[0],a[1]-b[1])
@@ -61,6 +63,14 @@ class Track:
     uncertain:bool=False
     blocked_path:list=field(default_factory=list)
     stationary_anchor:tuple|None=None
+    uncertainty_reason:str|None=None
+    motion_reference:str|None=None
+    entity_id:str|None=None
+    surface_points:list=field(default_factory=list)
+
+    def reset_motion(self):
+        self.history.clear();self.vx=0.;self.vy=0.;self.moving=False
+        self.stopped_since=None;self.low_motion_since=None;self.stationary_anchor=None
 
     def snapshot(self,now):
         return {'id':self.id,'class':self.label,'x':self.x,'y':self.y,'vx':self.vx,'vy':self.vy,
@@ -68,22 +78,52 @@ class Track:
                 'radius_m':self.radius,'first_seen_s':self.first_seen,'last_seen_s':self.last_seen,
                 'moving':self.moving,'motion_state':('MOVING' if self.moving else 'STATIONARY' if self.stopped_since is not None else 'UNKNOWN'),'ever_moved':self.ever_moved,'stopped_since_s':self.stopped_since,
                 'stationary_for_s':max(0.,now-self.stopped_since) if self.stopped_since is not None else 0.,
-                'blocked_since_s':self.blocked_since,'sources':sorted(self.sources),'uncertain':self.uncertain}
+                'blocked_since_s':self.blocked_since,'sources':sorted(self.sources),'uncertain':self.uncertain,'uncertainty_reason':self.uncertainty_reason,'motion_reference':self.motion_reference,'entity_id':self.entity_id,'surface_point_count':len(self.surface_points)}
 
 
 class Tracks:
     def __init__(self,cfg):self.cfg=cfg;self.items={};self.serial=0
-    def observe(self,observations,now,source,motion_frame=None,motion_positions=None,motion_yaw_override=None,motion_valid=True):
+    def observe(self,observations,now,source,motion_frame=None,motion_positions=None,motion_yaw_override=None,motion_valid=True,motion_reference=None,uncertainty_reason=None):
         """Observations: x,y,radius,label. Batch association survives detection order changes."""
-        unused=set(self.items)
-        for observation_index,(x,y,radius,label) in enumerate(observations):
+        # Match the full sensor batch with minimum total displacement.
+        # Dummy columns allow genuinely new objects; their penalty ensures
+        # valid existing matches win before a new identity is allocated.
+        candidates={}
+        for index,observation in enumerate(observations):
+            x,y,radius,label=observation[:4]
+            entity_id=observation[4] if len(observation)>4 else None
             if not all(math.isfinite(v) for v in (x,y,radius)) or radius<0:continue
-            choices=[key for key in unused if (label=='robot')==(self.items[key].label=='robot') and distance((x,y),(self.items[key].x,self.items[key].y))<self.cfg['association_m']]
-            key=min(choices,key=lambda k:distance((x,y),(self.items[k].x,self.items[k].y))) if choices else None
+            choices=[key for key,tr in self.items.items()
+                     if (label=='robot')==(tr.label=='robot')
+                     and (entity_id is None or tr.entity_id in (None,entity_id))
+                     and ((entity_id is not None and tr.entity_id==entity_id)
+                          or distance((x,y),(tr.x,tr.y))<self.cfg['association_m'])]
+            candidates[index]=sorted(choices,key=lambda key:(distance((x,y),
+                                  (self.items[key].x,self.items[key].y)),key))
+        matches={}
+        observation_ids=list(candidates);track_ids=list(self.items)
+        if observation_ids and track_ids:
+            penalty=(len(observation_ids)+1)*(self.cfg['association_m']+1.)
+            costs=np.full((len(observation_ids),len(track_ids)+len(observation_ids)),penalty)
+            for row,index in enumerate(observation_ids):
+                for col,key in enumerate(track_ids):
+                    costs[row,col]=(distance(observations[index],(self.items[key].x,self.items[key].y))
+                                    if key in candidates[index] else penalty*2)
+            rows,cols=linear_sum_assignment(costs)
+            for row,col in zip(rows,cols):
+                if col<len(track_ids) and costs[row,col]<penalty:
+                    matches[observation_ids[row]]=track_ids[col]
+        for observation_index,observation in enumerate(observations):
+            x,y,radius,label=observation[:4]
+            entity_id=observation[4] if len(observation)>4 else None
+            if observation_index not in candidates:continue
+            key=matches.get(observation_index)
             if key is None:
                 self.serial+=1;key='object_'+str(self.serial)
                 tr=Track(key,label,x,y,radius,now,now);self.items[key]=tr
-            else:tr=self.items[key];unused.remove(key)
+            else:tr=self.items[key]
+            if entity_id is not None:tr.entity_id=entity_id
+            tr.surface_points=list(observation[5]) if len(observation)>5 else []
             if motion_frame is None:mx,my=x,y;motion_yaw=0.
             else:
                 tx,ty,motion_yaw=motion_frame;dx=x-tx;dy=y-ty
@@ -91,12 +131,18 @@ class Tracks:
             if motion_positions is not None:
                 mx,my=motion_positions[observation_index];motion_yaw=motion_yaw_override or 0.
             previous_time=tr.last_seen
-            tr.sources.add(source);tr.uncertain=False
+            tr.sources.add(source);tr.uncertain=False;tr.uncertainty_reason=None
             if label=='person' or tr.label!='person':tr.label=label
             if now-previous_time>self.cfg['lost_timeout_s']:
-                tr.history.clear();tr.moving=False;tr.stopped_since=None;tr.blocked_since=None;tr.emitted.clear()
+                tr.reset_motion();tr.blocked_since=None;tr.blocked_path=[];tr.emitted.clear()
             tr.x=x;tr.y=y;tr.radius=max(radius,tr.radius*.8,self.cfg['person_radius_m'] if tr.label=='person' else 0.);tr.last_seen=now
-            if not motion_valid:tr.uncertain=True;continue
+            reference=motion_reference or ('registered' if motion_positions is not None else 'odom' if motion_frame is not None else 'map')
+            if tr.motion_reference is not None and reference!=tr.motion_reference:tr.reset_motion()
+            tr.motion_reference=reference
+            if not motion_valid:
+                tr.reset_motion();tr.uncertain=True
+                tr.uncertainty_reason=uncertainty_reason or 'MOTION_REFERENCE_UNAVAILABLE'
+                continue
             # RGB and LiDAR can update the same track at the same stamp.
             if not tr.history or now-tr.history[-1][0]>=self.cfg['history_sample_s']:
                 tr.history.append((now,mx,my))
@@ -122,7 +168,28 @@ class Tracks:
             age=now-tr.last_seen
             if age>self.cfg['lost_timeout_s']:
                 if verified_clear(tr):del self.items[key]
-                else:tr.uncertain=True
+                else:tr.uncertain=True;tr.uncertainty_reason='OBSERVATION_LOST_UNCONFIRMED'
+
+
+def obstacle_samples(track,cfg):
+    if track.label=='unclassified_object' and track.stopped_since is not None and not track.moving and track.surface_points:
+        return [(float(p[0]),float(p[1]),cfg['minimum_object_radius_m']) for p in track.surface_points]
+    return [(track.x,track.y,track.radius)]
+
+
+def navigation_envelope_radius(track,cfg):
+    radius=track.radius+cfg['costmap_padding_m']
+    if track.label=='person':
+        radius=max(radius,track.radius+cfg['person_stop_m']-cfg['robot_radius_m']+cfg['prediction_margin_m'])
+    return radius
+
+
+def mutual_peer_block(statuses,reports,held):
+    moving={'GOING_PICKUP','GOING_TABLE','GOING_DIRECT','GOING_KITCHEN','RETURNING_HOME'}
+    if not all(statuses.get(r,{}).get('state') in moving for r in ('robot_01','robot_02')):return False
+    blocked={r for r,d in reports.items() if d.get('sensor_fresh') is True and
+             any(t.get('class')=='robot' and t.get('blocks_path') for t in d.get('tracks',[]))}
+    return len(blocked)==2 or any(next(p for p in ('robot_01','robot_02') if p!=r) in held for r in blocked)
 
 
 class DynamicPolicy:
@@ -196,20 +263,24 @@ class DynamicPolicy:
                 self.contact_check_sent=True
                 events.append({'event':'CONTACT_PATH_CHECK','time_s':now,'track_ids':[],'contact_ids':sorted(self.contact_ids)})
         for key,tr in self.tracks.items.items():
-            centre=distance(robot,(tr.x,tr.y));d=max(0.,centre-tr.radius)
+            samples=obstacle_samples(tr,cfg)
+            d=max(0.,min(distance(robot,p)-p[2] for p in samples))
+            centre=distance(robot,(tr.x,tr.y))
             if d>cfg['recognition_m']:continue
             nearest=d if nearest is None else min(nearest,d)
             bearing=math.atan2(math.sin(math.atan2(tr.y-robot[1],tr.x-robot[0])-robot[2]),math.cos(math.atan2(tr.y-robot[1],tr.x-robot[0])-robot[2]))
             in_front=abs(bearing)<=cfg['front_response_half_angle_rad']
             if in_front and tr.label=='person':front_person=d if front_person is None else min(front_person,d)
             corridor=tr.blocked_path if tr.blocked_path and key not in self.detours else path
-            blocked=active and path_blocks((tr.x,tr.y),tr.radius,robot,corridor,cfg) and d<=cfg['response_m']
+            blocked=active and any(path_blocks(p,p[2],robot,corridor,cfg) for p in samples) and d<=cfg['response_m']
             if blocked and not tr.blocked_path:tr.blocked_path=list(path)
-            ttc,cpa=closest_approach((tr.x,tr.y),(tr.vx,tr.vy),robot,speed,cfg['prediction_horizon_s'])
-            collision=(cpa<cfg['robot_radius_m']+tr.radius+cfg['prediction_margin_m'] and ttc<=cfg['ttc_stop_s'] and (ttc>0. or centre<cfg['robot_radius_m']+tr.radius+cfg['hard_stop_clearance_m']))
+            predictions=[(p,*closest_approach(p,(tr.vx,tr.vy),robot,speed,cfg['prediction_horizon_s'])) for p in samples]
+            _,ttc,cpa=min(predictions,key=lambda v:v[2]-v[0][2])
+            collision=any(pcpa<cfg['robot_radius_m']+p[2]+cfg['prediction_margin_m'] and pt<=cfg['ttc_stop_s']
+                          and (pt>0. or distance(robot,p)<cfg['robot_radius_m']+p[2]+cfg['hard_stop_clearance_m']) for p,pt,pcpa in predictions)
             # Existing person STOP is kept separate from the 3m response range.
             stop_distance=cfg['person_stop_m']
-            rotation_risk=abs(angular_speed)>.02 and (centre<cfg['robot_radius_m']+tr.radius+cfg['prediction_margin_m'] or cpa<cfg['robot_radius_m']+tr.radius+cfg['prediction_margin_m'] and ttc<=cfg['rotation_prediction_s'])
+            rotation_risk=abs(angular_speed)>.02 and any(distance(robot,p)<cfg['robot_radius_m']+p[2]+cfg['prediction_margin_m'] or pcpa<cfg['robot_radius_m']+p[2]+cfg['prediction_margin_m'] and pt<=cfg['rotation_prediction_s'] for p,pt,pcpa in predictions)
             collision=collision or rotation_risk or (in_front and blocked and d<=stop_distance)
             risk=risk or collision
             state='TRACKING_5M'
@@ -248,12 +319,12 @@ class DynamicPolicy:
                         if not episode['alerted']:
                             episode['alerted']=True;self.exhausted.add(episode_id)
                             events.append({'event':'DETOUR_EXHAUSTED','track_ids':[key],'episode_id':episode_id,'time_s':now,'attempts':episode['failures']})
-                    elif not tr.uncertain and elapsed>=cfg['detour_after_s'] and blocked_for>=cfg['detour_after_s']:
+                    elif elapsed>=cfg['detour_after_s'] and blocked_for>=cfg['detour_after_s']:
                         if episode and not episode['pending'] and now-self.last_request.get(episode_id,-1e9)>=cfg['detour_retry_s']:
                             episode['pending']=True;self.last_request[episode_id]=now;tr.emitted.add(key)
                             state='DETOUR_REQUESTED'
                             events.append({'event':'DYNAMIC_DETOUR_REQUEST','track_ids':[key],'episode_id':episode_id,'time_s':now,'stationary_s':elapsed,'blocked_s':blocked_for,
-                                           'attempt':episode['failures']+1,'obstacles':[{'x':tr.x,'y':tr.y,'radius':tr.radius}]})
+                                           'attempt':episode['failures']+1,'obstacles':[{'x':tr.x,'y':tr.y,'radius':tr.radius+(cfg['prediction_margin_m'] if tr.uncertain else 0.),'label':tr.label}],'uncertainty_reason':tr.uncertainty_reason})
             if not blocked:
                 tr.blocked_since=None
                 for flag in ('BLOCKED_ALERT','REPLAN_CHECK',key):tr.emitted.discard(flag)
@@ -265,7 +336,7 @@ class DynamicPolicy:
                         for other in self.tracks.items.values()):
                     episode['active']=False;self.exhausted.discard(episode_id);self.last_request.pop(episode_id,None)
                     self.track_episode.pop(key,None);self.attempts.pop(key,None);self.no_path.discard(key)
-            if tr.uncertain and blocked:state='TRACK_UNCERTAIN';hold=True
+            if tr.uncertain and blocked and key not in self.detours:state='TRACK_UNCERTAIN';hold=True
             item=tr.snapshot(now);item.update({'distance_m':d,'blocks_path':blocked,'in_front':in_front,'rotation_risk':rotation_risk,'ttc_s':ttc,'closest_approach_m':cpa,'stage':state});snapshots.append(item);states.append(state)
         # A plan for this mission leg and current risk/track checks can establish
         # safe clearance even when a fixed static structure remains within 1 m.

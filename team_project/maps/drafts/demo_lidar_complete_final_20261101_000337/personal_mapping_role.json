@@ -1,0 +1,59 @@
+{
+  "role": "mapping",
+  "stack": "unmodified TEAM mapping/exploration",
+  "same_robot_model": "serving_robot_description/urdf/serving_robot.urdf.xacro",
+  "robot": "robot_01",
+  "owner": {
+    "pid": 3552,
+    "launch_pid": 3560,
+    "log": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/mapping_20261101_000315.log",
+    "mode": "mapping",
+    "mapping_stack": "team",
+    "site_id": "demo_lidar_complete_final",
+    "config": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/config/system.yaml"
+  },
+  "error": null,
+  "runner_returncode": 0,
+  "startup": {
+    "nodes": [
+      "/_ros2cli_daemon_101_98e76e07a06c4c4e82619bf81c1d9b23",
+      "/behavior_server",
+      "/bt_navigator",
+      "/bt_navigator_navigate_to_pose_rclcpp_node",
+      "/collision_monitor",
+      "/controller_server",
+      "/dynamic_scan_filter",
+      "/hold_recovery",
+      "/launch_ros_3560",
+      "/lifecycle_manager_navigation",
+      "/personal_mapping_session_observer",
+      "/planner_server",
+      "/robot_health",
+      "/robot_state_publisher",
+      "/route_executor",
+      "/serving_robot_bridge",
+      "/slam_toolbox",
+      "/soft_stop_limiter",
+      "/team_sim_clock",
+      "/transform_listener_impl_5a10a398e7e0",
+      "/transform_listener_impl_6348f2dbeaa0",
+      "/transform_listener_impl_64a41025ba00",
+      "/velocity_smoother"
+    ],
+    "map_dimensions": [
+      158,
+      120
+    ],
+    "known_cells": 2801
+  },
+  "map_updates": 58,
+  "max_odom_displacement_m": 3.3007790552652536,
+  "team_session_report": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261101_000337/R16-147_session_result.json",
+  "map_complete": false,
+  "raw_map_saved": true,
+  "operation_map_changed": false,
+  "operation_map_sha256": {
+    "/mnt/f/ROS2/serving_robot_team/team_project/maps/stores/demo_store/team_lidar_complete.yaml": "e6c631542b71427f45e6a222947dd3e831105e02e1bf7c23800a43411f56da8b",
+    "/mnt/f/ROS2/serving_robot_team/team_project/maps/stores/demo_store/team_lidar_complete.pgm": "7af78fae949b37364a073528cd5eee3804cf6e05f5519db7acae9d168e3adf69"
+  }
+}

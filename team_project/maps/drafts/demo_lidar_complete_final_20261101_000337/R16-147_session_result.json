@@ -1,0 +1,162 @@
+{
+  "explorer_terminal_status": "TIME_LIMIT_REACHED",
+  "map_complete": false,
+  "raw_map_saved": true,
+  "explorer_runner_outcome": "TIME_LIMIT_REACHED",
+  "explorer_log_evidence_available": true,
+  "nav2_cancel_unconfirmed_observed": false,
+  "explorer_shutdown_unverified_observed": false,
+  "explorer_internal_failure_observed": false,
+  "nav2_shutdown_status_observed": "NO_ACTIVE_MAPPING_GOAL",
+  "timeout_may_mask_inner_exit_code": true,
+  "nav2_action_result_independently_verified": false,
+  "last_observed_obstacle_hold": null,
+  "obstacle_hold_diagnostic_samples": 0,
+  "obstacle_hold_observed_span_s": 0.0,
+  "obstacle_hold_unresolved_in_log": false,
+  "timeout_with_unresolved_hold_evidence": false,
+  "safety_evidence_is_not_live_clearance": true,
+  "free_cells": 14771,
+  "unknown_cells": 3627,
+  "occupied_cells": 720,
+  "free_edge": {
+    "bottom": {
+      "count": 3,
+      "sample_cells": [
+        [
+          118,
+          0
+        ],
+        [
+          119,
+          0
+        ],
+        [
+          120,
+          0
+        ]
+      ]
+    },
+    "top": {
+      "count": 14,
+      "sample_cells": [
+        [
+          105,
+          120
+        ],
+        [
+          110,
+          120
+        ],
+        [
+          112,
+          120
+        ],
+        [
+          126,
+          120
+        ],
+        [
+          131,
+          120
+        ],
+        [
+          138,
+          120
+        ],
+        [
+          140,
+          120
+        ],
+        [
+          142,
+          120
+        ],
+        [
+          145,
+          120
+        ],
+        [
+          147,
+          120
+        ]
+      ]
+    },
+    "left": {
+      "count": 0,
+      "sample_cells": []
+    },
+    "right": {
+      "count": 69,
+      "sample_cells": [
+        [
+          157,
+          3
+        ],
+        [
+          157,
+          4
+        ],
+        [
+          157,
+          5
+        ],
+        [
+          157,
+          6
+        ],
+        [
+          157,
+          7
+        ],
+        [
+          157,
+          8
+        ],
+        [
+          157,
+          9
+        ],
+        [
+          157,
+          10
+        ],
+        [
+          157,
+          11
+        ],
+        [
+          157,
+          23
+        ]
+      ]
+    }
+  },
+  "free_edge_total_unique": 85,
+  "free_unknown_boundary_cells": 682,
+  "resolution_m": 0.05000000074505806,
+  "known_free_m2": 36.9275,
+  "strict_verified": false,
+  "strict_check": "FREE_SPACE_REACHES_MAP_EDGE",
+  "map_dimensions": [
+    158,
+    121
+  ],
+  "map_origin": [
+    -0.7604496856053027,
+    -0.8203778993962773
+  ],
+  "map_files": [
+    "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261101_000337/R16-147_official_raw_map.yaml",
+    "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261101_000337/R16-147_official_raw_map.pgm"
+  ],
+  "handoff_state": "PARTIAL_MAP_CHECKPOINT",
+  "map_draft_ready": false,
+  "manual_review_required": false,
+  "auto_exploration_limited": false,
+  "auto_map_verified": false,
+  "final_map_approved": false,
+  "navigation_map_authorized": false,
+  "map_draft_manifest": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261101_000337/R16-176_map_draft_manifest.json",
+  "source_status": "/mnt/f/ROS2/serving_robot_team/team_project/maps/drafts/demo_lidar_complete_final_20261101_000337/R16-147_session_result.json"
+}

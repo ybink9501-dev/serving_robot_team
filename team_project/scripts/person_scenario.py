@@ -9,7 +9,21 @@ if args.relative_to:
     xyz=list(map(float,values[-2].split()));rpy=list(map(float,values[-1].split()))
     args.x=xyz[0]+args.distance*math.cos(rpy[2]);args.y=xyz[1]+args.distance*math.sin(rpy[2]);args.yaw=rpy[2]+math.pi
 root=Path(__file__).resolve().parents[1];out=root/'_local_only/people';out.mkdir(parents=True,exist_ok=True)
+try:
+    from gz.transport13 import Node
+    from gz.msgs10.boolean_pb2 import Boolean
+    from gz.msgs10.pose_pb2 import Pose
+    from google.protobuf.text_format import Parse
+    transport=Node()
+except ImportError:
+    transport=None
+
 def service(name,typ,request):
+    if name=='set_pose' and transport is not None:
+        ok,response=transport.request('/world/cafe/'+name,Parse(request,Pose()),Pose,Boolean,5000)
+        if not ok or not response.data:raise RuntimeError('Gazebo set_pose rejected or timed out')
+        return 'data: true'
+
     result=subprocess.run(['gz','service','-s','/world/cafe/'+name,'--reqtype',typ,'--reptype','gz.msgs.Boolean','--timeout','5000','--req',request],capture_output=True,text=True)
     if result.returncode or 'data: true' not in result.stdout:raise RuntimeError(result.stdout+result.stderr)
     return result.stdout
@@ -30,7 +44,8 @@ if args.action=='spawn':
 else:
     tx=args.to_x if args.to_x is not None else args.x;ty=args.to_y if args.to_y is not None else args.y
     steps=max(1,int(args.duration/.2))
+    started=time.monotonic()
     for i in range(steps+1):
         t=i/steps;service('set_pose','gz.msgs.Pose',pose(args.x+(tx-args.x)*t,args.y+(ty-args.y)*t))
-        if steps>1:time.sleep(args.duration/steps)
+        if steps>1:time.sleep(max(0.,started+(i+1)*args.duration/steps-time.monotonic()))
 print(json.dumps({'model':args.name,'action':args.action,'source':'Gazebo visual+collision; no person-detection topic written'}))

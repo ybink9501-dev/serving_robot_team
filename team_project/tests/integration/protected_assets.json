@@ -1,6 +1,6 @@
 {
-  "ros_ws/src/serving_robot_gazebo/worlds/cafe.world.sdf": "28ff62c3e58e7c5c8bd681b59203ca10e629d051a4c0db5e81c3cb493229dd2e",
-  "maps/stores/demo_store/map.pgm": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "maps/stores/demo_store/map.yaml": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "maps/stores/demo_store/map_meta.yaml": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  "ros_ws/src/serving_robot_gazebo/worlds/cafe.world.sdf": "2473304faa02ce078ae1890e66d62fc6ba781718e50f8683744534a6b05be4d1",
+  "maps/stores/demo_store/map.pgm": "adf2f5277517ef7e3f01a0c99922b2e203cce50b1ccf5b4911b78da7d9ea5354",
+  "maps/stores/demo_store/map.yaml": "c2d7917874fc2c080c0daa91dbe23e12f5e1d5ae792ae4d0ced48afe0aa73b70",
+  "maps/stores/demo_store/map_meta.yaml": "7399c9aec6f276d8adb52ac88023e2e3cbef168fcd8cb3fd7166c95241830214"
 }

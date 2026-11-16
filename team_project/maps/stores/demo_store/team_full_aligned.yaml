@@ -1,0 +1,10 @@
+# Existing TEAM synthetic map, aligned to the personal navigation frame.
+# Source image and geometry are unchanged; this is NOT a new LiDAR/SLAM map.
+# Original TEAM origin [-4.5,-3.5] + world_to_map [3.2,2.25].
+image: map.pgm
+mode: trinary
+resolution: 0.05
+origin: [-1.3, -1.25, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196

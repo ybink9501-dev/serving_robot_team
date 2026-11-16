@@ -49,3 +49,24 @@ def test_new_map_withholds_tf_until_explicit_initial_pose():
     finally:
         node.destroy_node()
         rclpy.shutdown()
+
+
+def test_tf_covers_requests_between_publish_intervals():
+    from types import SimpleNamespace
+    from rclpy.time import Time
+    rclpy.init()
+    node = MapOdomGuard()
+    sent = []
+    try:
+        node.broadcaster = SimpleNamespace(sendTransform=sent.append)
+        before = node.get_clock().now().nanoseconds
+        node.publish()
+        after = node.get_clock().now().nanoseconds
+        stamp = Time.from_msg(sent[0].header.stamp).nanoseconds
+        assert before + 300_000_000 <= stamp <= after + 300_000_000
+        node.pending_initial_pose = True
+        node.publish()
+        assert len(sent) == 1
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()

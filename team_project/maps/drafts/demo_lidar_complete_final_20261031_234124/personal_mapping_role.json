@@ -1,0 +1,24 @@
+{
+  "role": "mapping",
+  "stack": "unmodified TEAM mapping/exploration",
+  "same_robot_model": "serving_robot_description/urdf/serving_robot.urdf.xacro",
+  "robot": "robot_01",
+  "owner": {
+    "pid": 294,
+    "launch_pid": 398,
+    "log": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/mapping_20261031_234110.log",
+    "mode": "mapping",
+    "mapping_stack": "team",
+    "site_id": "demo_lidar_complete_final",
+    "config": "/mnt/f/ROS2/serving_robot_team/team_project/_local_only/config/system.yaml"
+  },
+  "error": "Mapping readiness timed out: lifecycle=[]",
+  "runner_returncode": null,
+  "startup": null,
+  "map_updates": 81,
+  "max_odom_displacement_m": 1.775987311302545e-13,
+  "team_session_report": null,
+  "map_complete": false,
+  "raw_map_saved": false,
+  "operation_map_changed": false
+}

@@ -1,11 +1,12 @@
 """Pure domain policies. No ROS dependencies; tested independently."""
 import math
+import time
 from dataclasses import dataclass, field
 
 ROBOT_IDS = ('robot_01', 'robot_02')
 STATES = ('IDLE','GOING_PICKUP','WAIT_LOAD','GOING_TABLE','GOING_DIRECT',
-          'WAIT_HANDOVER','RETURNING_HOME','GOING_KITCHEN','RECOVERY_WAIT','COMPLETED','CANCELED','ERROR')
-ACTIVE = {'GOING_PICKUP','WAIT_LOAD','GOING_TABLE','GOING_DIRECT','WAIT_HANDOVER','RETURNING_HOME','GOING_KITCHEN','RECOVERY_WAIT'}
+          'WAIT_HANDOVER','WAIT_COLLECTION','RETURNING_HOME','GOING_KITCHEN','RECOVERY_WAIT','COMPLETED','CANCELED','ERROR')
+ACTIVE = {'GOING_PICKUP','WAIT_LOAD','GOING_TABLE','GOING_DIRECT','WAIT_HANDOVER','WAIT_COLLECTION','RETURNING_HOME','GOING_KITCHEN','RECOVERY_WAIT'}
 MAX_SPEED_MPS=0.25
 MAX_YAW_RPS=0.80
 GOAL_NAV_XY_M=0.10
@@ -39,14 +40,19 @@ def person_factor(distance_m, stop_m=PERSON_STOP_M, slow_m=PERSON_SLOW_M):
 def may_confirm(command, state, mode):
     return ((command=='LOAD' and state=='WAIT_LOAD' and mode=='KITCHEN_PICKUP') or
             (command=='COMPLETE' and state=='WAIT_HANDOVER' and mode in ('KITCHEN_PICKUP','DELIVER_DIRECT')) or
-            (command=='COLLECTED' and state=='WAIT_HANDOVER' and mode=='TABLE_COLLECT'))
+            (command=='COLLECTED' and state=='WAIT_COLLECTION' and mode=='TABLE_COLLECT'))
 
 
 def next_after_nav(state,mode):
     if state=='GOING_PICKUP' and mode=='KITCHEN_PICKUP':return 'WAIT_LOAD'
-    if state in ('GOING_TABLE','GOING_DIRECT'):return 'WAIT_HANDOVER'
+    if state in ('GOING_TABLE','GOING_DIRECT'):return 'WAIT_COLLECTION' if mode=='TABLE_COLLECT' else 'WAIT_HANDOVER'
     if state in ('RETURNING_HOME','GOING_KITCHEN'):return 'COMPLETED'
     raise ValueError('Unexpected successful goal in state '+state)
+
+
+def should_return_home(*, state, mode, active, queued, ready, pose, home, tolerance):
+    return (ready and state=='COMPLETED' and mode!='GO_HOME' and not active
+            and not queued and pose is not None and distance(pose,home)>tolerance)
 
 
 @dataclass
@@ -57,6 +63,9 @@ class Task:
     mode:str='KITCHEN_PICKUP'
     state:str='QUEUED'
     side:str='auto'
+    assigned_side:str|None=None
+    received_seq:int|None=None
+    received_at:float|None=None
 
 
 @dataclass
@@ -75,16 +84,18 @@ class FleetCore:
         if robot not in ROBOT_IDS:raise ValueError('Unknown robot: '+str(robot))
         if mode not in ('KITCHEN_PICKUP','DELIVER_DIRECT','TABLE_COLLECT','GO_KITCHEN','GO_HOME'):
             raise ValueError('Unknown mission mode')
-        task=Task(rid,table,robot,mode,side=side)
+        receipt=max((t.received_seq or 0 for t in self.tasks.values()),default=0)+1
+        task=Task(rid,table,robot,mode,side=side,received_seq=receipt,received_at=time.time())
         self.tasks[rid]=task
         self.queue.append(rid)
         return task,True
 
-    def dispatch_next(self,available, kitchen_free=True):
-        for rid in list(self.queue):
+    def dispatch_next(self,available, kitchen_free=True, acceptable=None):
+        for rid in sorted(self.queue,key=lambda rid:rid.startswith('idle-home-')):
             t=self.tasks[rid]
             if t.robot not in available or t.robot in self.active:continue
             if t.mode in ('KITCHEN_PICKUP','GO_KITCHEN') and not kitchen_free:continue
+            if acceptable is not None and not acceptable(t):continue
             self.queue.remove(rid); self.active[t.robot]=rid; t.state='ASSIGNED'
             return t
         return None
@@ -125,7 +136,8 @@ class ZoneArbiter:
             owner=self.owners.get(zone)
             # Keep current occupant if still inside, otherwise grant to oldest approach.
             if owner not in inside:
-                owner=(inside or candidates or [None])[0]
+                if inside:owner=inside[0]
+                elif owner not in candidates:owner=(candidates or [None])[0]
             if owner is None:self.owners.pop(zone,None)
             else:self.owners[zone]=owner
             hold.update(r for r in candidates if owner and r!=owner)
