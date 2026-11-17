@@ -122,7 +122,12 @@ export function MappingPanel({ mapping: m }: { mapping: MappingControl }) {
         <Progress m={m} />
         {m.draftReady && m.phase !== 'mapping' && (
           <div className="alert alert-warn">
-            {status?.message ?? '지도 초안이 준비되었습니다.'} 아래 '지도 완성하기'에서 확인하고 Save Map으로 저장하세요.
+            {status?.message ?? '지도 초안이 준비되었습니다.'} 아래 '지도 완성하기'에서 확인하고 검토본을 저장하세요.
+            {status?.auto_map_verified === false && (
+              <p data-testid="mapping-unverified-note" style={{ margin: '8px 0 0' }}>
+                이 지도는 사람 검토용입니다. 자동 완성 또는 주행 승인을 뜻하지 않으며, 검사를 통과하고 별도 승인하기 전에는 운영 지도를 바꾸지 않습니다.
+              </p>
+            )}
           </div>
         )}
         {status?.stage === 'failed' && status.error && <div className="alert alert-error" role="alert">{status.error}</div>}

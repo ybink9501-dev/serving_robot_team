@@ -34,6 +34,9 @@ def classify_map_draft(report):
         and valid_area
         and outcome == "COVERAGE_LIMITED"
     )
+    # A valid saved artifact can be offered for human review without claiming
+    # that exploration or automatic map validation completed successfully.
+    review_available = saved and valid_area
 
     if auto_verified:
         state = "AUTO_MAP_VERIFIED_PENDING_REVIEW"
@@ -56,7 +59,8 @@ def classify_map_draft(report):
     return {
         "handoff_state": state,
         "map_draft_ready": ready,
-        "manual_review_required": ready,
+        "review_available": review_available,
+        "manual_review_required": review_available,
         "auto_exploration_limited": limited,
         "auto_map_verified": auto_verified,
         "final_map_approved": False,
@@ -111,11 +115,16 @@ def write_map_handoff(report, status_path):
             result.update({
                 "handoff_state": "MAP_ARTIFACT_REVIEW_REQUIRED",
                 "map_draft_ready": False,
+                "review_available": False,
                 "manual_review_required": False,
                 "auto_map_verified": False,
                 "navigation_map_authorized": False,
             })
             originals = []
+
+    if not originals:
+        result["review_available"] = False
+        result["manual_review_required"] = False
 
     manifest_path = (
         output / "R16-176_map_draft_manifest.json"

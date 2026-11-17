@@ -61,7 +61,7 @@ def test_auto_ingest_without_stop(tmp_path):
     assert st['progress']['goals_sent'] == 4 and st['progress']['goals_arrived'] == 3
     assert st['progress']['goals_failed'] == 1
     assert (tmp_path / 'map' / 'drafts' / 'current' / 'R16-147_official_raw_map.pgm').is_file()
-    assert s.review_service().describe()['width'] == 12
+    assert s.review_service().describe()['width'] == 40
 
 
 def test_stop_cuts_early_and_makes_draft(tmp_path):

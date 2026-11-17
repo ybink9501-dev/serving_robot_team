@@ -1,7 +1,7 @@
 """The robot's map picture vs the store's: map_image_current, dispatch exclusion, restart."""
 import time
 
-from .test_mapping_api import build, client, repo, wait_ready  # noqa: F401  (fixtures)
+from .test_mapping_api import build, client, mark_autonomy_handoff_validated, repo, wait_ready  # noqa: F401  (fixtures)
 
 ORDER = {'type': 'SERVE', 'destination_id': 'table_01'}
 
@@ -25,7 +25,9 @@ def adopt_new_map(c):
     wait_ready(c)
     info = c.get('/api/stores/demo_store/map-review').json()
     r = c.post('/api/mapping/save', json={'source_hash': info['source_hash'], 'confirmed': True, 'strokes': []})
-    assert r.json()['adopted'] is True
+    assert r.json()['adopted'] is False
+    mark_autonomy_handoff_validated(r.json())
+    assert c.post('/api/mapping/adopt', json={'confirmed': True}).json()['adopted'] is True
 
 
 def test_robots_start_with_the_current_picture(client):

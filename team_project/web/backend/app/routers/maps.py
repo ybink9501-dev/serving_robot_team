@@ -55,27 +55,25 @@ async def mapping_discard(request: Request):
     return _mapping_status(state)
 
 
-async def _save_and_adopt(state, body):
-    """Save Map: finalize the corrections, then make the result the store's map.
-    If only the adoption is refused (orders running) the saved result is kept and
-    POST /api/mapping/adopt can be pressed again later."""
+async def _save_review(state, body):
+    """Save an edited map as a review artifact; never promote it implicitly."""
     try:
         review = await run_in_threadpool(state.mapping.save_review, body)
     except MappingError as e:
         return _mapping_err(e)
-    out = {'review_result': review, 'adopted': False, 'adopt_error': None}
-    try:
-        out.update(await run_in_threadpool(state.adopter.adopt))
-    except SemanticError as e:
-        out['adopt_error'] = {'code': e.code, 'message': e.message}
-    return {**_mapping_status(state), **out}
+    return {**_mapping_status(state), 'review_result': review,
+            'adopted': False, 'adopt_error': None}
 
 
 @router.post('/api/mapping/adopt')
 async def mapping_adopt(request: Request):
     state = request.app.state
     try:
-        result = await run_in_threadpool(state.adopter.adopt)
+        body = await request.json()
+        if not isinstance(body, dict) or body.get('confirmed') is not True:
+            return err(422, 'MAP_ADOPTION_CONFIRMATION_REQUIRED',
+                       '검사 통과 지도를 운영에 적용하려면 별도 확인이 필요합니다.')
+        result = await run_in_threadpool(state.adopter.adopt, True)
     except SemanticError as e:
         return _semantic_err(e)
     return {**_mapping_status(state), **result}
@@ -87,7 +85,7 @@ async def mapping_save(request: Request):
         body = await request.json()
     except ValueError:
         return err(422, 'INVALID_JSON', 'Save Map에는 보정 내용과 최종 확인이 필요합니다.')
-    return await _save_and_adopt(request.app.state, body)
+    return await _save_review(request.app.state, body)
 
 
 def _review(store_id, state):
@@ -124,7 +122,7 @@ async def review_finalize(store_id: str, request: Request):
         body = await request.json()
     except ValueError:
         return err(400, 'INVALID_JSON', 'JSON 형식이 아닙니다.')
-    return await _save_and_adopt(request.app.state, body)
+    return await _save_review(request.app.state, body)
 
 
 @router.get('/api/stores/{store_id}/map/backups')

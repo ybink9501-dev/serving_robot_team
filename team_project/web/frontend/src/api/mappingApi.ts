@@ -18,14 +18,14 @@ export function getMappingStatus(storeId: string): Promise<MappingStatus> {
   return request(apiClient.get<MappingStatus>('/api/mapping/status', { params: { store_id: storeId } }))
 }
 
-/** Save Map: 보정 저장 + 매장 지도로 반영(채택). 주문이 진행 중이면 반영만 보류되고 adopted=false */
+/** 검토본 저장 및 완성 검사. 운영 지도 반영은 별도 승인 API로 수행 */
 export function saveMap(body: MapSaveBody): Promise<MapSaveResult> {
   return request(apiClient.post<MapSaveResult>('/api/mapping/save', body))
 }
 
 /** 저장은 됐지만 반영이 보류된 경우 다시 시도 */
-export function adoptSavedMap(): Promise<MapSaveResult> {
-  return request(apiClient.post<MapSaveResult>('/api/mapping/adopt', {}))
+export function adoptSavedMap(confirmed: boolean): Promise<MapSaveResult> {
+  return request(apiClient.post<MapSaveResult>('/api/mapping/adopt', { confirmed }))
 }
 
 /** 보정 화면 정보 (초안이 준비된 뒤에만) */

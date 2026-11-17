@@ -58,6 +58,12 @@ export interface MappingStatus {
   last_saved_revision: number | null
   /** 보정할 임시 지도(초안)가 준비됨 */
   draft_ready?: boolean
+  /** 자동 완성 전이라도 저장된 지도 파일을 사람이 검토할 수 있음 */
+  review_available?: boolean
+  /** 자동 완성 검사 통과 여부. 검토 가능 여부와 별도 */
+  auto_map_verified?: boolean
+  map_complete?: boolean
+  completion_reason?: string | null
   stage?: MappingStage
   progress?: MappingProgress
   message?: string | null
@@ -71,7 +77,29 @@ export interface MappingStatus {
 
 /** POST /api/mapping/save · /api/mapping/adopt 응답 */
 export interface MapSaveResult extends MappingStatus {
-  review_result?: { saved: boolean; status?: string }
+  review_result?: {
+    saved: boolean
+    status?: string
+    navigation_validated?: boolean
+    navigation_validation?: { verified: boolean; reason: string; [key: string]: unknown }
+    navigation_handoff?: {
+      format: string
+      state: string
+      map_frame: string
+      map_yaml: string
+      map_image: string
+      map_sha256: string
+      source_slam_map_sha256: string
+      source_slam_yaml_sha256: string
+      origin: number[]
+      resolution_m: number
+      completion_validation: { verified: boolean; reason: string; [key: string]: unknown }
+      source_auto_map_verified: boolean
+      destination_profile: string | { [key: string]: unknown }
+      nav2_route_validation: string | { [key: string]: unknown }
+      operation_map_authorized: boolean
+    } | null
+  }
   adopted: boolean
   adopt_error?: { code: string; message: string } | null
   needs_robot_restart?: boolean
@@ -95,6 +123,11 @@ export interface MapReviewData {
   resolution: number
   origin: { x: number; y: number; yaw: number }
   source_hash: string
+  review_available?: boolean
+  auto_map_verified?: boolean
+  map_complete?: boolean
+  explorer_terminal_status?: string | null
+  source_strict_check?: string | null
   image_url: string
   suggestions: ReviewSuggestion[]
 }

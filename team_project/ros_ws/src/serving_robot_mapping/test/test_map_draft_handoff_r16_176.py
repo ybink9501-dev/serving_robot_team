@@ -37,6 +37,8 @@ def test_time_limit_is_not_completed_draft():
         "PARTIAL_MAP_CHECKPOINT"
     )
     assert result["map_draft_ready"] is False
+    assert result["review_available"] is True
+    assert result["auto_map_verified"] is False
 
 
 def test_safety_halt_not_misclassified():
@@ -45,6 +47,7 @@ def test_safety_halt_not_misclassified():
     )
     assert result["map_draft_ready"] is False
     assert result["navigation_map_authorized"] is False
+    assert result["review_available"] is True
 
 
 def test_auto_complete_still_needs_review():

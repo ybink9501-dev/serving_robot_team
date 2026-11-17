@@ -19,7 +19,7 @@ from PIL import Image      # imported after the handler: a Stop that comes early
 
 
 def write_map():
-    w = h = 12
+    w = h = 40
     px = bytearray([255] * (w * h))
     for y in range(1, h - 1):
         for x in range(1, w - 1):
@@ -28,6 +28,8 @@ def write_map():
         for y in (0, h - 1):
             px[y * w + i] = 100                     # walls
         px[i * w] = px[i * w + w - 1] = 100
+    if mode == 'unknown_contact':
+        px[w + 1] = 255
     Image.frombytes('L', (w, h), bytes(px)).save(os.path.join(out, 'R16-147_official_raw_map.pgm'), format='PPM')
     with open(os.path.join(out, 'R16-147_official_raw_map.yaml'), 'w') as f:
         f.write('image: R16-147_official_raw_map.pgm\nmode: raw\nresolution: 0.1\n'
@@ -48,10 +50,21 @@ if mode == 'hang':
         time.sleep(0.05)
 if mode != 'nomap':
     w, h, px = write_map()
-    result = {'map_draft_ready': True, 'navigation_map_authorized': False,
+    unfinished = mode == 'unverified_exit'
+    strict_verified = mode not in ('unknown_contact', 'unverified_exit')
+    map_complete = strict_verified and not stop
+    result = {'map_draft_ready': not unfinished,
+              'review_available': unfinished,
+              'navigation_map_authorized': False,
+              'auto_map_verified': map_complete, 'map_complete': map_complete,
+              'raw_map_saved': mode != 'nomap',
+              'strict_verified': strict_verified,
+              'strict_check': 'CLOSED_FREE_REGION_VERIFIED' if strict_verified else 'FREE_SPACE_TOUCHES_UNKNOWN',
               'map_dimensions': [w, h], 'free_cells': px.count(0), 'occupied_cells': px.count(100),
               'unknown_cells': px.count(255),
-              'explorer_terminal_status': 'COVERAGE_LIMITED' if not stop else 'INTERRUPTED'}
+              'explorer_terminal_status': 'EXPLORER_EXITED' if unfinished else (
+                  'EXPLORER_REPORTED_MAP_COMPLETE' if map_complete else
+                  'COVERAGE_LIMITED' if not stop else 'INTERRUPTED')}
 else:
     result = {'map_draft_ready': False, 'explorer_terminal_status': 'NO_MAP'}
 with open(os.path.join(out, 'R16-147_session_result.json'), 'w') as f:

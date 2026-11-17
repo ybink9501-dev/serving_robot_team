@@ -67,6 +67,7 @@ function mappingStatus(): MappingStatus {
     started_at: mockDb.mappingStartedAt,
     last_saved_revision: mockDb.rawMap?.map_revision ?? null,
     draft_ready: mockDb.mappingDraft,
+    saved: mockDb.mappingReviewSaved,
     stage: mapping ? (arrived > 0 ? 'exploring' : 'starting') : mockDb.mappingDraft ? 'ready' : 'idle',
     progress: {
       percent: mockDb.mappingDraft ? 100 : mapping ? Math.min(99, Math.floor(95 * (1 - Math.exp(-arrived / 12)))) : 0,
@@ -80,7 +81,6 @@ function mappingStatus(): MappingStatus {
     error: null,
     stop_requested: false,
     enabled: true,
-    saved: false,
   }
 }
 
@@ -107,6 +107,7 @@ function mappingHandler(command: 'start' | 'stop' | 'discard'): HttpResponseReso
       if (mockDb.mappingPhase === 'mapping') return refuse(409, 'ALREADY_MAPPING', '이미 매핑 중이에요.')
       if (mockDb.mappingDraft) return refuse(409, 'DRAFT_PENDING', '아직 반영하지 않은 임시 지도가 있어요. 보정해서 저장하거나 버린 뒤에 다시 시작해 주세요.')
       mockDb.mappingPhase = 'mapping'
+      mockDb.mappingReviewSaved = false
       mockDb.mappingStartedAt = new Date().toISOString()
     } else if (command === 'stop') {
       if (mockDb.mappingPhase !== 'mapping') return refuse(409, 'NOT_MAPPING', '중지할 매핑이 없어요.')
@@ -116,6 +117,7 @@ function mappingHandler(command: 'start' | 'stop' | 'discard'): HttpResponseReso
       if (mockDb.mappingPhase === 'mapping') return refuse(409, 'ALREADY_MAPPING', '매핑 중에는 버릴 수 없어요. 먼저 중지해 주세요.')
       mockDb.mappingPhase = 'idle'
       mockDb.mappingDraft = false
+      mockDb.mappingReviewSaved = false
       mockDb.mappingStartedAt = null
     }
     commitMockDb()
@@ -130,6 +132,7 @@ function adoptMockMap() {
   mockDb.semantics = { store_id: MOCK_STORE_ID, map_revision: revision, entities: [], waypoints: [], zones: [] }
   mockDb.mappingPhase = 'idle'
   mockDb.mappingDraft = false
+  mockDb.mappingReviewSaved = false
   mockDb.mappingStartedAt = null
   commitMockDb()
   simMapImageChanged()
@@ -179,12 +182,35 @@ export const httpHandlers = [
     const body = await readJson(request)
     if (!body || body.confirmed !== true) return refuse(422, 'REVIEW_REJECTED', '지도 수정 내용의 최종 확인이 필요합니다.')
     if (body.source_hash !== MOCK_SOURCE_HASH) return refuse(409, 'REVIEW_REJECTED', '지도가 변경되었습니다. 최신 지도를 다시 확인해 주세요.')
-    return adoptResult(true)
+    mockDb.mappingReviewSaved = true
+    commitMockDb()
+    return HttpResponse.json({
+      ...mappingStatus(), saved: true, adopted: false,
+      adopt_error: mockDb.mapHandoffBlocked
+        ? { code: 'MAP_AND_DESTINATIONS_VALIDATION_REQUIRED', message: '자율주행 목적지·경로 검증이 완료될 때까지 운영 지도 적용은 보류됩니다.' }
+        : null,
+      review_result: { saved: true, navigation_validated: true,
+        navigation_validation: { verified: true, reason: 'CLOSED_FREE_REGION_VERIFIED' },
+        navigation_handoff: {
+          format: 'serving_robot_navigation_map_handoff_v1',
+          state: 'MAP_CANDIDATE_READY_FOR_AUTONOMY_INTEGRATION',
+          map_frame: 'map', map_yaml: 'navigation_map.yaml', map_image: 'navigation_map.pgm',
+          map_sha256: 'mock-map-sha256', source_slam_map_sha256: 'mock-source-sha256',
+          source_slam_yaml_sha256: 'mock-yaml-sha256', origin: [0, 0, 0], resolution_m: 0.05,
+          completion_validation: { verified: true, reason: 'CLOSED_FREE_REGION_VERIFIED' },
+          source_auto_map_verified: true,
+          destination_profile: mockDb.mapHandoffBlocked ? 'PENDING_AUTONOMY_INTEGRATION' : { verified: true },
+          nav2_route_validation: mockDb.mapHandoffBlocked ? 'PENDING_AUTONOMY_INTEGRATION' : { verified: true },
+          operation_map_authorized: false,
+        } },
+    })
   }),
 
-  http.post(api('/mapping/adopt'), async () => {
+  http.post(api('/mapping/adopt'), async ({ request }) => {
     await respondDelay()
-    if (mockDb.mappingDraft && mockDb.mappingPhase !== 'mapping') return adoptResult(false)
+    const body = await readJson(request)
+    if (body?.confirmed !== true) return refuse(422, 'MAP_ADOPTION_CONFIRMATION_REQUIRED', '운영 지도 적용에 별도 확인이 필요합니다.')
+    if (mockDb.mappingReviewSaved && mockDb.mappingDraft && mockDb.mappingPhase !== 'mapping') return adoptResult(false)
     return refuse(409, 'NOT_SAVED', '저장한 보정 지도가 없어요. 먼저 지도를 보정해서 저장해 주세요.')
   }),
 

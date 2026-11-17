@@ -19,6 +19,7 @@ import os
 import shutil
 import threading
 import time
+import hashlib
 
 import yaml
 from PIL import Image
@@ -92,27 +93,69 @@ class MapAdopter:
             os.replace(tmp, os.path.join(self.store_dir, name))
 
     # ---- adopt
-    def adopt(self):
+    def adopt(self, confirmed=False):
         s = self.session
         with self.lock:
             if s.status()['phase'] == 'mapping':
                 raise SemanticError(409, 'ALREADY_MAPPING', '매핑이 끝난 뒤에 지도를 반영할 수 있어요.')
             if not s.saved or not s.output_dir or not os.path.isdir(s.output_dir):
                 raise SemanticError(409, 'NOT_SAVED', '저장한 보정 지도가 없어요. 먼저 지도를 보정해서 저장해 주세요.')
+            if confirmed is not True:
+                raise SemanticError(422, 'MAP_ADOPTION_CONFIRMATION_REQUIRED',
+                                    '검사 통과 지도를 운영에 적용하려면 별도 확인이 필요합니다.')
             if self.fleet.is_busy():
                 raise SemanticError(409, 'ORDERS_ACTIVE',
                                     '주문이 진행 중이거나 대기 중이라 지도를 바꿀 수 없어요. 주문이 끝난 뒤에 다시 시도해 주세요.')
             src_yaml = os.path.join(s.output_dir, 'navigation_map.yaml')
             src_pgm = os.path.join(s.output_dir, 'navigation_map.pgm')
+            review_record_path = os.path.join(s.output_dir, 'review_record.json')
+            handoff_path = os.path.join(s.output_dir, 'navigation_handoff.json')
             try:
                 with open(src_yaml, encoding='utf-8') as f:
                     meta = yaml.safe_load(f)
+                if (not isinstance(meta, dict) or meta.get('mode') != 'trinary'
+                        or meta.get('image') != 'navigation_map.pgm'
+                        or os.path.realpath(os.path.join(s.output_dir, meta['image']))
+                        != os.path.realpath(src_pgm)):
+                    raise ValueError('unexpected navigation map metadata')
                 with Image.open(src_pgm) as im:
                     width, height = im.size
                 ox, oy, yaw = [float(v) for v in meta['origin']]
                 res = float(meta['resolution'])
+                audit = _read_json(review_record_path)
+                if not isinstance(audit, dict):
+                    raise ValueError('review record missing')
+                if (audit.get('navigation_validated') is not True
+                        or not isinstance(audit.get('navigation_validation'), dict)
+                        or audit['navigation_validation'].get('verified') is not True):
+                    raise ValueError('reviewed map has no passing validation record')
+                handoff = _read_json(handoff_path)
+                if (not isinstance(handoff, dict)
+                        or not isinstance(handoff.get('destination_profile'), dict)
+                        or handoff['destination_profile'].get('verified') is not True
+                        or not isinstance(handoff.get('nav2_route_validation'), dict)
+                        or handoff['nav2_route_validation'].get('verified') is not True):
+                    raise ValueError('destination profile and Nav2 route validation are still pending')
+                with open(src_pgm, 'rb') as image_file:
+                    actual_hash = hashlib.sha256(image_file.read()).hexdigest()
+                if audit.get('map_sha256') != actual_hash:
+                    raise ValueError('reviewed map hash changed')
+                from .review import verify_navigation_map
+                validation = verify_navigation_map(src_yaml)
+                if validation.get('verified') is not True:
+                    raise ValueError('edited map failed completion validation: %s' % validation.get('reason'))
+                audit.update(navigation_validated=True,
+                             navigation_validation=validation,
+                             navigation_map_authorized=True,
+                             operator_approved_at=now_iso())
+                handoff.update(state='OPERATION_MAP_ADOPTED',
+                               operation_map_authorized=True,
+                               operator_approved_at=audit['operator_approved_at'])
+                _atomic_json(review_record_path, audit)
+                _atomic_json(handoff_path, handoff)
             except (OSError, ValueError, KeyError, TypeError) as e:
-                raise SemanticError(422, 'SAVED_MAP_INVALID', '저장한 지도를 읽지 못했어요: %s' % e)
+                raise SemanticError(422, 'SAVED_MAP_NOT_APPROVED',
+                                    '운영 지도 검증 또는 승인 조건을 통과하지 못했습니다: %s' % e)
 
             old_meta = _read_json_yaml(os.path.join(self.store_dir, 'map_meta.yaml'))
             revision = int(old_meta.get('map_revision', 1)) + 1

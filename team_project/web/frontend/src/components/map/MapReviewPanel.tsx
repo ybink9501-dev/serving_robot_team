@@ -49,8 +49,7 @@ function pointerPixel(
 }
 
 /**
- * 자동 매핑으로 만든 지도 초안을 확인·보정하고 "Save Map" 으로 저장한다 (맵핑팀 제작, 통합하며 수정).
- * 저장하면 백엔드가 이 지도를 매장 지도로 반영한다 (주문이 진행 중이면 반영만 보류).
+ * 자동 매핑 지도를 검토용 산출물로 저장한다. 운영 인계는 별도 검증·승인 후 진행한다.
  */
 export function MapReviewPanel({ mapping }: { mapping: MappingControl }) {
   const { storeId } = useStoreData()
@@ -227,7 +226,7 @@ export function MapReviewPanel({ mapping }: { mapping: MappingControl }) {
 
   async function finalize() {
     if (!data || !confirmed || saving || saved) return
-    if (!window.confirm('수정한 지도를 저장하고 매장 지도로 반영할까요?\n(이전 지도는 백업에 남습니다.)')) return
+    if (!window.confirm('수정한 지도를 검토본으로 저장하고 기존 완성 검사를 실행할까요?\n이 단계에서는 운영 지도가 바뀌지 않습니다.')) return
 
     setSaving(true)
     setSaveError(null)
@@ -240,7 +239,8 @@ export function MapReviewPanel({ mapping }: { mapping: MappingControl }) {
       })
       if (!result.review_result?.saved) throw new Error('지도 저장을 확인하지 못했습니다.')
       setSaved(true)
-      setPendingReason(result.adopted ? null : (result.adopt_error?.message ?? '지도 반영이 보류되었습니다.'))
+      setPendingReason(result.review_result.navigation_validation?.reason
+        ?? (result.review_result.navigation_validated ? 'CLOSED_FREE_REGION_VERIFIED' : '검사 결과 없음'))
     } catch (cause) {
       setSaveError(toApiError(cause).message)
     } finally {
@@ -256,9 +256,6 @@ export function MapReviewPanel({ mapping }: { mapping: MappingControl }) {
       </div>
       <div className="card-body"
         style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <p>자동으로 만든 지도를 확인하고, 추천 수정을 적용하거나
-          직접 보완한 뒤 최종 저장하세요.</p>
-
         {error && (
           <div className="alert alert-warn" role="alert">
             지도 연결 상태: {error}
@@ -269,6 +266,13 @@ export function MapReviewPanel({ mapping }: { mapping: MappingControl }) {
 
         {data && (
           <>
+            <p>자동으로 만든 지도를 확인하고, 추천 수정을 적용하거나 직접 보완한 뒤 검토본으로 저장하세요.
+              수동 편집은 LiDAR 관측 기록과 구분됩니다. 미확인 공간을 통로로 그리면 실제 구조를 확인했다는 운영자 판단으로 기록됩니다.</p>
+            {data.auto_map_verified === false && (
+              <div className="alert alert-warn" role="status" data-testid="review-unverified-map">
+                자동 탐색이 완성 판정을 받지 못한 검토용 지도입니다. 종료 사유: {data.explorer_terminal_status ?? '기록 없음'}; 기존 검사: {data.source_strict_check ?? '미통과 또는 기록 없음'}. 지도에 그린 내용은 센서 관측으로 간주되지 않습니다.
+              </div>
+            )}
             <div className="btn-row">
               <button type="button"
                 className={freehand ? 'btn btn-primary' : 'btn'}
@@ -556,7 +560,7 @@ export function MapReviewPanel({ mapping }: { mapping: MappingControl }) {
             <button type="button" className="btn btn-primary"
               disabled={!confirmed || saving || saved}
               onClick={() => void finalize()}>
-              {saving ? '지도 저장 중…' : 'Save Map · 지도 최종 저장'}
+              {saving ? '검토본 검사 중…' : '검토본 저장 · 기존 기준으로 검사'}
             </button>
 
             {saveError && (
@@ -565,12 +569,26 @@ export function MapReviewPanel({ mapping }: { mapping: MappingControl }) {
               </div>
             )}
 
-            {saved && pendingReason && (
-              <div className="alert alert-warn" role="status" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span>보정한 지도는 저장했지만 아직 매장 지도로 반영하지 못했습니다: {pendingReason}</span>
-                <button type="button" className="btn btn-sm" disabled={!!mapping.pending}
+            {saved && mapping.adoption?.navigationValidated && mapping.adoption.adoptionAllowed && (
+              <div className="alert alert-info" role="status" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span>검토본이 기존 검사 기준을 통과했습니다 ({pendingReason}). 운영 지도는 아직 바뀌지 않았습니다.</span>
+                <button type="button" className="btn btn-primary" disabled={!!mapping.pending}
                   onClick={() => void mapping.adopt()}>
-                  지도 반영 다시 시도
+                  검사 통과 지도를 운영에 적용 · 별도 승인
+                </button>
+              </div>
+            )}
+            {saved && mapping.adoption?.navigationValidated && !mapping.adoption.adoptionAllowed && (
+              <div className="alert alert-info" role="status" data-testid="mapping-handoff-pending">
+                <span>저장 지도 파일은 기존 완성 검사를 통과했습니다. 자율주행 목적지·접근 방향과 Nav2 주행 검증이 연결되기 전까지 검토본으로 보관하며 운영 지도는 바꾸지 않습니다. {mapping.adoption.pendingReason}</span>
+              </div>
+            )}
+            {saved && !mapping.adoption?.navigationValidated && (
+              <div className="alert alert-warn" role="status" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span>검토본은 저장했지만 기존 완성 검사를 통과하지 못했습니다: {pendingReason}. 운영 지도 적용은 차단되어 있습니다.</span>
+                <button type="button" className="btn btn-sm"
+                  onClick={() => setSaved(false)}>
+                  검토본을 다시 수정
                 </button>
               </div>
             )}

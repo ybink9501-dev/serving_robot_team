@@ -58,6 +58,57 @@ def points(x1, y1, x2, y2):
             y1 += sy
 
 
+def verify_navigation_map(yaml_path):
+    """Apply the mapping completion rules to the edited Nav2 artifact.
+
+    Nav2 trinary pixels are decoded to the same occupancy values consumed by
+    mapping_completion_verifier.verify_closed_free_region: free=0,
+    occupied=100, unknown=-1. Keep the limits and four-neighbour rule aligned.
+    """
+    path = Path(yaml_path)
+    try:
+        meta = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(meta, dict) or meta.get("mode") != "trinary":
+            raise ValueError("Expected a Nav2 trinary map")
+        resolution = float(meta["resolution"])
+        with Image.open(path.parent / meta["image"]) as image:
+            if image.format != "PPM" or image.mode != "L":
+                raise ValueError("Expected an 8-bit grayscale PGM")
+            width, height = image.size
+            pixels = image.tobytes()
+        if len(pixels) != width * height:
+            raise ValueError("Invalid map image size")
+        occupancy = tuple(0 if value == 254 else 100 if value == 0 else -1
+                          for value in pixels)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return {"verified": False, "reason": "SAVED_MAP_INVALID", "error": str(exc)}
+
+    if (width < 3 or height < 3 or not math.isfinite(resolution)
+            or resolution <= 0):
+        return {"verified": False, "reason": "INVALID_MAP_GEOMETRY"}
+
+    free_count = 0
+    for y in range(height):
+        for x in range(width):
+            index = y * width + x
+            if occupancy[index] > 25:
+                continue
+            free_count += 1
+            if x == 0 or y == 0 or x == width - 1 or y == height - 1:
+                return {"verified": False, "reason": "FREE_SPACE_REACHES_MAP_EDGE",
+                        "width": width, "height": height, "resolution": resolution}
+            if any(occupancy[n] == -1 for n in
+                   (index - 1, index + 1, index - width, index + width)):
+                return {"verified": False, "reason": "FREE_SPACE_TOUCHES_UNKNOWN",
+                        "width": width, "height": height, "resolution": resolution}
+
+    if free_count * resolution * resolution < 10.0:
+        return {"verified": False, "reason": "INSUFFICIENT_KNOWN_FREE_AREA",
+                "width": width, "height": height, "resolution": resolution}
+    return {"verified": True, "reason": "CLOSED_FREE_REGION_VERIFIED",
+            "width": width, "height": height, "resolution": resolution}
+
+
 class MapReviewService:
     def __init__(self, draft_dir, output_root, store_id):
         self.store_id = store_id
@@ -116,6 +167,7 @@ class MapReviewService:
         session = json.loads(
             self.session_path.read_text(encoding="utf-8")
         )
+        self.session_status = session
         if session.get("map_draft_ready") is not True:
             raise ReviewError("검토 가능한 지도 초안이 아닙니다.")
 
@@ -200,6 +252,11 @@ class MapReviewService:
                 "yaw": float(yaw),
             },
             "source_hash": self.source_hash,
+            "review_available": self.session_status.get("review_available", True) is True,
+            "auto_map_verified": self.session_status.get("auto_map_verified") is True,
+            "map_complete": self.session_status.get("map_complete") is True,
+            "explorer_terminal_status": self.session_status.get("explorer_terminal_status"),
+            "source_strict_check": self.session_status.get("source_strict_check"),
             "image_url":
                 "/api/stores/%s/map-review.png" % self.store_id,
             "suggestions": self.suggestions(),
@@ -323,13 +380,23 @@ class MapReviewService:
         digest = hashlib.sha256(converted).hexdigest()[:16]
         output_root = self.output_root
         output_root.mkdir(parents=True, exist_ok=True)
-        target = output_root / ("approved_" + digest)
+        target = output_root / ("review_" + digest)
 
         if target.exists():
+            try:
+                existing = json.loads((target / "review_record.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                existing = {}
+            try:
+                handoff = json.loads((target / "navigation_handoff.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                handoff = None
             return {
-                "status": "SAVED_NAV_CHECK_PENDING",
+                "status": "REVIEW_MAP_SAVED",
                 "saved": True,
-                "navigation_validated": False,
+                "navigation_validated": existing.get("navigation_validated") is True,
+                "navigation_validation": existing.get("navigation_validation"),
+                "navigation_handoff": handoff,
                 "navigation_applied": False,
                 "output_dir": str(target),
             }
@@ -367,18 +434,65 @@ class MapReviewService:
                 if check.tobytes() != converted:
                     raise ReviewError("생성된 지도를 다시 읽지 못했습니다.")
 
+            navigation_validation = verify_navigation_map(yaml_out)
+            manual_edits = [
+                {
+                    "edit_index": index,
+                    "source": "operator_manual_edit",
+                    "value": stroke.get("value"),
+                    "points_top_left_pixels": stroke.get("points") or [
+                        {"x": stroke.get("x1"), "y": stroke.get("y1")},
+                        {"x": stroke.get("x2"), "y": stroke.get("y2")},
+                    ],
+                }
+                for index, stroke in enumerate(strokes)
+            ]
+            handoff = {
+                "format": "serving_robot_navigation_map_handoff_v1",
+                "state": "MAP_CANDIDATE_READY_FOR_AUTONOMY_INTEGRATION",
+                "map_frame": "map",
+                "map_yaml": "navigation_map.yaml",
+                "map_image": "navigation_map.pgm",
+                "map_sha256": sha(pgm_out),
+                "source_slam_map_sha256": self.source_hash,
+                "source_slam_yaml_sha256": sha(self.yaml_path),
+                "origin": list(self.meta["origin"][:3]),
+                "resolution_m": float(resolution),
+                "completion_validation": navigation_validation,
+                "source_auto_map_verified": self.session_status.get("auto_map_verified") is True,
+                "destination_profile": "PENDING_AUTONOMY_INTEGRATION",
+                "nav2_route_validation": "PENDING_AUTONOMY_INTEGRATION",
+                "operation_map_authorized": False,
+            }
             audit = {
                 "source_sha256": self.source_hash,
                 "source_yaml_sha256": sha(self.yaml_path),
                 "user_final_saved": True,
-                "navigation_validated": False,
+                "source_auto_map_verified": self.session_status.get("auto_map_verified") is True,
+                "source_map_complete": self.session_status.get("map_complete") is True,
+                "source_explorer_terminal_status": self.session_status.get("explorer_terminal_status"),
+                "navigation_validated": navigation_validation["verified"],
+                "navigation_validation": navigation_validation,
                 "navigation_map_authorized": False,
+                "edit_provenance": "operator_strokes_over_sensor_map",
+                "provenance": {
+                    "base_map": {
+                        "source": "slam_saved_map_from_lidar_pipeline",
+                        "source_pgm_sha256": self.source_hash,
+                        "source_yaml_sha256": sha(self.yaml_path),
+                    },
+                    "manual_edits": manual_edits,
+                },
                 "unknown_is_nontraversable": True,
                 "strokes": strokes,
                 "map_sha256": sha(pgm_out),
             }
             (pending / "review_record.json").write_text(
                 json.dumps(audit, ensure_ascii=False, indent=2),
+                encoding="utf-8"
+            )
+            (pending / "navigation_handoff.json").write_text(
+                json.dumps(handoff, ensure_ascii=False, indent=2),
                 encoding="utf-8"
             )
             os.rename(pending, target)
@@ -388,9 +502,11 @@ class MapReviewService:
                 shutil.rmtree(pending)
 
         return {
-            "status": "SAVED_NAV_CHECK_PENDING",
+            "status": "REVIEW_MAP_SAVED",
             "saved": True,
-            "navigation_validated": False,
+            "navigation_validated": navigation_validation["verified"],
+            "navigation_validation": navigation_validation,
+            "navigation_handoff": handoff,
             "navigation_applied": False,
             "output_dir": str(target),
         }

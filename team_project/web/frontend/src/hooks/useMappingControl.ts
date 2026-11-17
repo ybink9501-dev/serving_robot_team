@@ -22,10 +22,13 @@ export interface Adoption {
   needsRestart: boolean
   /** 저장은 됐지만 반영이 보류된 이유 */
   pendingReason: string | null
+  navigationValidated: boolean
+  validationReason: string | null
+  adoptionAllowed: boolean
 }
 
 /**
- * Start / Stop / Discard 매핑과 Save Map(보정 저장 + 매장 지도 반영).
+ * 매핑 실행, 검토본 저장, 검사 통과 후 별도 운영 승인.
  * - 요청 중에는 모든 매핑 버튼 비활성 (중복 클릭 방지, ref 로 동기 차단)
  * - 상태는 서버 응답으로만 갱신 (ROS 를 직접 호출하지 않음)
  * - 매핑 중에는 2초마다 상태를 다시 읽어 진행 단계를 보여 주고, 스스로 끝난 것을 알아챈다
@@ -45,7 +48,7 @@ export function useMappingControl(options: { onAdopted?: () => Promise<void> | v
 
   const status = mappingStatus.data
   const phase: MappingPhase | null = status?.phase ?? null
-  const draftReady = status?.draft_ready === true
+  const draftReady = status?.review_available === true || status?.draft_ready === true
 
   // 매핑 중 상태 폴링 + 스스로 끝났을 때 알림
   const lastPhase = useRef<MappingPhase | null>(null)
@@ -99,23 +102,43 @@ export function useMappingControl(options: { onAdopted?: () => Promise<void> | v
     async (result: MapSaveResult) => {
       setMappingStatus(result)
       if (result.adopted) {
-        setAdoption({ adopted: true, needsRestart: result.needs_robot_restart !== false, pendingReason: null })
+        setAdoption({ adopted: true, needsRestart: result.needs_robot_restart !== false,
+          pendingReason: null, navigationValidated: true, validationReason: null,
+          adoptionAllowed: false })
         try {
           await onAdopted.current?.()
         } finally {
           notify('새 지도를 매장 지도로 반영했습니다.', 'success')
         }
       } else {
-        const reason = result.adopt_error?.message ?? '지도 반영이 보류되었습니다.'
-        setAdoption({ adopted: false, needsRestart: false, pendingReason: reason })
-        notify(`보정은 저장했지만 지도 반영은 보류되었습니다: ${reason}`, 'info')
+        const validation = result.review_result?.navigation_validation
+        const navigationValidated = result.review_result?.navigation_validated === true
+        const handoff = result.review_result?.navigation_handoff
+        const verified = (value: unknown) => typeof value === 'object' && value !== null
+          && (value as { verified?: unknown }).verified === true
+        const autonomyReady = !!handoff
+          && verified(handoff.destination_profile)
+          && verified(handoff.nav2_route_validation)
+        const handoffBlocked = navigationValidated && !autonomyReady
+        const reason = result.adopt_error?.message
+          ?? (result.review_result
+            ? navigationValidated
+              ? handoffBlocked
+                ? '자율주행 목적지·접근 방향과 Nav2 경로 검증이 끝날 때까지 검토본으로 보관합니다.'
+                : '검토본 검사를 통과했습니다. 운영 적용은 별도 승인 후 진행하세요.'
+              : `검토본이 저장됐지만 검사를 통과하지 못했습니다: ${validation?.reason ?? '검사 결과 없음'}`
+            : '운영 지도 반영이 보류되었습니다.')
+        setAdoption({ adopted: false, needsRestart: false, pendingReason: reason,
+          navigationValidated, validationReason: validation?.reason ?? null,
+          adoptionAllowed: navigationValidated && autonomyReady && result.adopt_error == null })
+        notify(reason, 'info')
       }
       return result
     },
     [setMappingStatus, notify],
   )
 
-  /** MapReviewPanel 의 "Save Map" */
+  /** MapReviewPanel의 검토본 저장 */
   const save = useCallback(
     async (body: MapSaveBody) => {
       if (inFlight.current) throw new Error('다른 매핑 요청을 처리 중입니다.')
@@ -132,14 +155,19 @@ export function useMappingControl(options: { onAdopted?: () => Promise<void> | v
     [afterSave],
   )
 
-  /** 저장은 됐는데 주문 때문에 반영이 보류된 경우 다시 시도 */
+  /** 검사를 통과한 검토본을 운영 지도에 별도 승인 후 적용 */
   const adopt = useCallback(async () => {
     if (inFlight.current) return
+    if (!adoption?.navigationValidated || !adoption.adoptionAllowed) {
+      notify(adoption?.pendingReason ?? '운영 적용에 필요한 검증이 남아 있습니다.', 'error')
+      return
+    }
+    if (!window.confirm('검사에 통과한 지도를 운영 지도에 적용할까요? 적용 전 기존 지도는 백업됩니다.')) return
     inFlight.current = true
     setPending('adopt')
     setError(null)
     try {
-      await afterSave(await adoptSavedMap())
+      await afterSave(await adoptSavedMap(true))
     } catch (e) {
       const message = toApiError(e).message
       setError(message)
@@ -148,7 +176,7 @@ export function useMappingControl(options: { onAdopted?: () => Promise<void> | v
       inFlight.current = false
       setPending(null)
     }
-  }, [afterSave, notify])
+  }, [adoption, afterSave, notify])
 
   const enabled = status?.enabled !== false
   return {

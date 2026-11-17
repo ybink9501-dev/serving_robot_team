@@ -23,10 +23,14 @@ export interface MockDbState {
   mappingStartedAt: string | null
   /** 보정할 임시 지도(초안)가 준비됨 */
   mappingDraft: boolean
+  /** 지도 편집본을 저장해 검사한 뒤 별도 운영 승인 대기 중 */
+  mappingReviewSaved: boolean
   /** 탐색이 이 시간(ms) 뒤에 스스로 끝난다 (Stop 없이 초안 준비). 0 이하면 끝나지 않음 */
   mappingAutoEndMs: number
   /** true 면 지도 반영(채택)이 주문 때문에 보류된다 (테스트·개발용) */
   adoptBlocked: boolean
+  /** 자율주행 목적지·Nav2 검증 전에는 검토본 handoff만 허용한다 */
+  mapHandoffBlocked: boolean
   rawMap: RawMapInfo | null
   semantics: SemanticMap | null
   tasks: Task[]
@@ -49,8 +53,10 @@ function initialState(): MockDbState {
     mappingPhase: 'idle',
     mappingStartedAt: null,
     mappingDraft: false,
+    mappingReviewSaved: false,
     mappingAutoEndMs: 8000,
     adoptBlocked: false,
+    mapHandoffBlocked: false,
     rawMap: null,
     semantics: null,
     tasks: [],
@@ -105,6 +111,9 @@ export function seedMockDb() {
   const revision = (mockDb.rawMap?.map_revision ?? 0) + 1
   mockDb.mappingPhase = 'idle'
   mockDb.mappingDraft = false
+  mockDb.mappingReviewSaved = false
+  mockDb.adoptBlocked = false
+  mockDb.mapHandoffBlocked = false
   mockDb.rawMap = buildRawMap(MOCK_STORE_ID, revision)
   mockDb.semantics = buildSeedSemantics(MOCK_STORE_ID, revision)
   commitMockDb()

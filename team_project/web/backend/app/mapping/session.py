@@ -121,6 +121,8 @@ class MappingSession:
         self.ended_at = None
         self.stop_requested = False
         self.draft_ready = False
+        self.review_available = False
+        self.auto_map_verified = False
         self.completion = None
         self.message = None
         self.error = None
@@ -129,6 +131,7 @@ class MappingSession:
         self.progress_max = 0
 
     _FIELDS = ('phase', 'stage', 'started_at', 'ended_at', 'stop_requested', 'draft_ready',
+               'review_available', 'auto_map_verified',
                'completion', 'message', 'error', 'saved', 'output_dir', 'progress_max', 'pid')
 
     def _save(self):
@@ -150,11 +153,13 @@ class MappingSession:
         for k in self._FIELDS:
             if k in data:
                 setattr(self, k, data[k])
+        if self.draft_ready and 'review_available' not in data:
+            self.review_available = True
         sd = data.get('session_dir')
         self.session_dir = Path(sd) if sd else None
         # a draft that was prepared must still be on disk, otherwise forget it
-        if self.draft_ready and not self.cfg.draft_dir.is_dir():
-            self.draft_ready, self.saved = False, False
+        if (self.draft_ready or self.review_available) and not self.cfg.draft_dir.is_dir():
+            self.draft_ready, self.review_available, self.auto_map_verified, self.saved = False, False, False, False
             if self.phase == 'stopped':
                 self.phase, self.stage = 'idle', 'idle'
 
@@ -224,7 +229,7 @@ class MappingSession:
         """A made-up-but-monotonic percentage. The explorer does not know how big the room is,
         so this is only a feel for 'how far along': it rises with the goals that were reached,
         never goes back, and stays below 100 until the draft is ready (shown as an estimate)."""
-        if self.draft_ready:
+        if self.auto_map_verified:
             return 100
         est = int(95 * (1 - math.exp(-arrived / max(1.0, self.cfg.expected_goals))))
         self.progress_max = max(self.progress_max, min(est, 99))
@@ -254,7 +259,8 @@ class MappingSession:
         report = self._result()
         self.completion = report.get('explorer_terminal_status')
         self.phase = 'stopped'
-        if report.get('map_draft_ready') is not True:
+        review_available = report.get('review_available') is True or report.get('map_draft_ready') is True
+        if not review_available:
             self.stage = 'failed'
             reason = self.completion or 'UNKNOWN'
             took = self._elapsed()
@@ -274,21 +280,25 @@ class MappingSession:
             self._save()
             return
         try:
-            ingest(self.session_dir / RAW_YAML, target)
+            ingest(self.session_dir / RAW_YAML, target, report)
         except (OSError, ValueError) as exc:
             self.stage = 'failed'
             self.error = '임시 지도 변환에 실패했어요: %s' % exc
             self._save()
             return
-        self.draft_ready, self.error, self.stage = True, None, 'ready'
-        if self.completion == 'COVERAGE_LIMITED':
+        self.draft_ready, self.review_available = True, True
+        self.auto_map_verified = report.get('auto_map_verified') is True or (
+            report.get('map_complete') is True and report.get('strict_verified') is True
+        )
+        self.error, self.stage = None, 'ready'
+        if self.auto_map_verified:
+            self.message = '자동 완성 검사를 통과했습니다. 운영 적용 전 검토와 별도 승인이 필요합니다.'
+        elif self.completion == 'COVERAGE_LIMITED':
             self.message = '더 이상 안전하게 탐색할 곳이 없어 마쳤어요. 지도를 검토해 주세요.'
-        elif self.completion == 'EXPLORER_REPORTED_MAP_COMPLETE':
-            self.message = '자동 매핑을 마쳤어요. 지도를 검토해 주세요.'
         elif self.stop_requested:
-            self.message = '중지해서 지금까지 만든 지도로 초안을 만들었어요. 지도를 검토해 주세요.'
+            self.message = '탐색을 중지했습니다. 저장된 미완성 지도를 검토용으로 준비했습니다. 자동 완성으로 승인된 것은 아닙니다.'
         else:
-            self.message = '자동 탐색이 끝났어요. 지도를 검토해 주세요.'
+            self.message = '탐색 완료 판정은 나지 않았습니다. 저장된 지도를 검토용으로 준비했습니다.'
         self._save()
 
     # ---- public --------------------------------------------------------------------
@@ -309,6 +319,9 @@ class MappingSession:
                 'started_at': self.started_at,
                 'last_saved_revision': 1 if self.saved else 0,
                 'draft_ready': self.draft_ready,
+                'review_available': self.review_available,
+                'auto_map_verified': self.auto_map_verified,
+                'map_complete': self.auto_map_verified,
                 'completion_reason': self.completion,
                 'message': self.message,
                 'error': self.error,
@@ -318,7 +331,7 @@ class MappingSession:
                 'stage': self.stage,
                 'progress': {
                     'percent': self._estimate(arrived) if self.phase != 'idle' else 0,
-                    'estimated': not self.draft_ready,
+                    'estimated': not self.auto_map_verified,
                     'elapsed_s': self._elapsed(),
                     'goals_sent': sent, 'goals_arrived': arrived, 'goals_failed': failed,
                 },

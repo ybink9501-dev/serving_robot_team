@@ -214,7 +214,7 @@ export function MapSetupPage() {
   else if (!map)
     mapArea = (
       <EmptyState title="저장된 지도가 없습니다.">
-        <span>오른쪽 매핑 패널에서 Start Mapping → Stop Mapping → Save Map 순서로 지도를 생성하세요.</span>
+        <span>오른쪽 매핑 패널에서 탐색을 시작하고, 생성된 지도는 완성 여부와 관계없이 검토할 수 있습니다. 수정본은 기존 기준으로 검사하고 별도 승인 전에는 운영에 적용되지 않습니다.</span>
       </EmptyState>
     )
   else

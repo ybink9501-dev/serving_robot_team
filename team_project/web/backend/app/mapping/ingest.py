@@ -26,7 +26,7 @@ def fail(message):
     raise ValueError(message)
 
 
-def ingest(source_yaml, target):
+def ingest(source_yaml, target, source_report=None):
     source_yaml = Path(source_yaml).resolve()
     target = Path(target).absolute()
 
@@ -139,10 +139,19 @@ def ingest(source_yaml, target):
             ],
             "source_pgm_sha256": sha(image_path),
             "source_yaml_sha256": sha(source_yaml),
+            "review_artifact_only": True,
+            "source_exploration_outcome": (source_report or {}).get("explorer_terminal_status"),
+            "source_map_complete": (source_report or {}).get("map_complete") is True,
+            "source_auto_map_verified": (source_report or {}).get("auto_map_verified") is True,
         }, indent=2), encoding="utf-8")
 
         session.write_text(json.dumps({
             "map_draft_ready": True,
+            "review_available": True,
+            "auto_map_verified": (source_report or {}).get("auto_map_verified") is True,
+            "map_complete": (source_report or {}).get("map_complete") is True,
+            "explorer_terminal_status": (source_report or {}).get("explorer_terminal_status"),
+            "source_strict_check": (source_report or {}).get("strict_check"),
             "navigation_map_authorized": False,
             "map_dimensions": [width, height],
             "free_cells": free,
