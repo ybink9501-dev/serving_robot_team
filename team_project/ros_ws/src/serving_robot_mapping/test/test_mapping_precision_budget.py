@@ -51,3 +51,21 @@ def test_bootstrap_behavior_does_not_enable_general_spin_recovery():
     assert nav['behavior_server']['ros__parameters']=={'behavior_plugins':['wait']}
     assert updated_slam['slam_toolbox']['ros__parameters']['check_min_dist_and_heading_precisely'] is True
     assert 'check_min_dist_and_heading_precisely' not in slam['slam_toolbox']['ros__parameters']
+
+
+def test_mapping_observation_spin_is_available_without_enabling_operation_recovery():
+    nav={'behavior_server':{'ros__parameters':{'behavior_plugins':['wait']}}}
+    updated=module.mapping_scan_spin_parameters(nav)
+    behavior=updated['behavior_server']['ros__parameters']
+    assert behavior['behavior_plugins']==['wait','mapping_scan_spin']
+    assert behavior['mapping_scan_spin']['plugin']=='nav2_behaviors::Spin'
+    assert behavior['max_rotational_vel']==.30
+    assert behavior['min_rotational_vel']==.05
+    assert nav['behavior_server']['ros__parameters']=={'behavior_plugins':['wait']}
+
+
+def test_mapping_observation_spin_rejects_unbounded_rotation():
+    with pytest.raises(ValueError):
+        module.mapping_scan_spin_parameters(
+            {'behavior_server':{'ros__parameters':{'behavior_plugins':['wait']}}},
+            max_angular_speed=.31)

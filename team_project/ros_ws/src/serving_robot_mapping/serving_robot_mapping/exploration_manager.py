@@ -1793,6 +1793,19 @@ class ExplorationManager(Node):
             self.state_machine.transition_to(MappingState.EXPLORING);self.request_navigation_replan()
         elif reason=='Mapping Explorer shutting down':
             self.state_machine.transition_to(MappingState.IDLE)
+        elif (
+            reason.startswith('OBSERVATION_SAFETY_NOT_CLEAR:')
+            or reason == 'OBSERVATION_READY_TIMEOUT'
+        ):
+            # The sweep either confirmed cancellation or timed out before
+            # sending a Spin goal. Keep the live safety gate fail-closed,
+            # record this viewpoint as attempted, then select another.
+            self.state_machine.transition_to(MappingState.EXPLORING)
+            self.request_navigation_replan()
+            self.get_logger().warn(
+                'Mapping observation could not pass the live safety/settle '
+                'gate; no sweep continues, selecting another viewpoint.'
+            )
         else:
             self.state_machine.transition_to(MappingState.ERROR)
             self.get_logger().error('MAPPING_OBSERVATION_FAILED: '+reason)

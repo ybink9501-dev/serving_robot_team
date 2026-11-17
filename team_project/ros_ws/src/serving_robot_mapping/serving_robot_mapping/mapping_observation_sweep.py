@@ -65,7 +65,17 @@ class ObservationSweep:
             from nav2_msgs.action import Spin
             goal=Spin.Goal();goal.target_yaw=self.plan[self.index];goal.time_allowance.sec=15
             self.ack=self.client.send_goal_async(goal);self.phase='ACK';self.deadline=now+8.;return
-        if not raw or not safe:self.cancel('OBSERVATION_SAFETY_NOT_CLEAR: '+raw_reason);return
+        if not raw or not safe:
+            blockers = []
+            if not raw:
+                blockers.append('SCAN_' + raw_reason)
+            if not safe:
+                blockers.append('LIVE_NAVIGATION_SAFETY')
+            self.cancel(
+                'OBSERVATION_SAFETY_NOT_CLEAR: '
+                + ';'.join(blockers)
+            )
+            return
         if self.phase=='ACK':
             if self.ack.done():
                 self.handle=self.ack.result()

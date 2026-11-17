@@ -102,10 +102,45 @@ def test_running_spin_is_canceled_and_unconfirmed_cancel_is_not_hidden():
     node.mapping_navigation_safety_check.return_value=False
     with patch('serving_robot_mapping.mapping_observation_sweep.time.monotonic',return_value=10.):sweep.tick()
     assert sweep.phase=='CANCEL';sweep.handle.cancel_goal_async.assert_called_once()
+    assert sweep.reason=='OBSERVATION_SAFETY_NOT_CLEAR: LIVE_NAVIGATION_SAFETY'
     sweep.cancel_ack=Future()
     with patch('serving_robot_mapping.mapping_observation_sweep.time.monotonic',return_value=19.):sweep.tick()
     assert sweep.busy and sweep.phase=='UNCERTAIN'
     assert done.call_args.args[1]=='OBSERVATION_CANCEL_UNCONFIRMED'
+
+
+@pytest.mark.parametrize('reason', [
+    'OBSERVATION_SAFETY_NOT_CLEAR: LIVE_NAVIGATION_SAFETY',
+    'OBSERVATION_READY_TIMEOUT',
+])
+def test_safe_observation_gate_failure_returns_to_candidate_selection(reason):
+    from serving_robot_mapping.exploration_manager import ExplorationManager
+    from serving_robot_mapping.mapping_state_machine import MappingState
+    transform=SimpleNamespace(transform=SimpleNamespace(
+        translation=SimpleNamespace(x=1.0,y=2.0)))
+    manager=SimpleNamespace(
+        tf_buffer=SimpleNamespace(lookup_transform=Mock(return_value=transform)),
+        _observation_pose=(1.0,2.0),_inspection_memory=(),
+        _observation_proposal=None,
+        _observation_unknown_before=0,
+        frontier_clearance_guard=SimpleNamespace(grid=((0,-1),)),
+        mapping_evidence_directory='',_edge_probe_goals=[],
+        _visibility_fallback_cache=(),
+        _visibility_fallback_last_scanned_context=None,
+        _visibility_fallback_retry_after=0.0,
+        state_machine=SimpleNamespace(transition_to=Mock()),
+        request_navigation_replan=Mock(),get_logger=Mock(return_value=Mock()),
+    )
+
+    ExplorationManager.observation_finished(
+        manager, False, reason, [],
+    )
+
+    manager.state_machine.transition_to.assert_called_once_with(
+        MappingState.EXPLORING
+    )
+    manager.request_navigation_replan.assert_called_once_with()
+    assert manager._inspection_memory==[(1.0,2.0,1)]
 
 
 def test_arrival_offset_cannot_reset_requested_viewpoint_budget(tmp_path):

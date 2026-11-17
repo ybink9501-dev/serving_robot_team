@@ -24,11 +24,7 @@ def mapping_precision_parameters(slam, navigation, resolution, tolerance, bootst
     navigation['controller_server']['ros__parameters']['general_goal_checker']['xy_goal_tolerance']=tolerance
     if bootstrap:
         slam['slam_toolbox']['ros__parameters']['check_min_dist_and_heading_precisely']=True
-        behavior=navigation['behavior_server']['ros__parameters']
-        behavior['behavior_plugins']=list(behavior['behavior_plugins'])+['mapping_scan_spin']
-        behavior['mapping_scan_spin']={'plugin':'nav2_behaviors::Spin'}
-        behavior['max_rotational_vel']=.30
-        behavior['min_rotational_vel']=.05
+        navigation=mapping_scan_spin_parameters(navigation)
     if align_clearance:
         import json
         costmap=navigation['global_costmap']['global_costmap']['ros__parameters']
@@ -51,6 +47,24 @@ def mapping_precision_parameters(slam, navigation, resolution, tolerance, bootst
         navigation['planner_server']['ros__parameters']['GridBased']['allow_unknown']=False
     return slam,navigation
 
+def mapping_scan_spin_parameters(navigation, max_angular_speed=.30, min_angular_speed=.05):
+    """Add only the bounded mapping observation Spin action to Nav2."""
+    import copy
+    maximum=float(max_angular_speed);minimum=float(min_angular_speed)
+    if not (math.isfinite(maximum) and math.isfinite(minimum)
+            and 0 < minimum <= maximum <= .30):
+        raise ValueError('Mapping observation rotation must remain within 0..0.30 rad/s')
+    navigation=copy.deepcopy(navigation)
+    behavior=navigation['behavior_server']['ros__parameters']
+    plugins=list(behavior.get('behavior_plugins', []))
+    if 'mapping_scan_spin' not in plugins:
+        plugins.append('mapping_scan_spin')
+    behavior['behavior_plugins']=plugins
+    behavior['mapping_scan_spin']={'plugin':'nav2_behaviors::Spin'}
+    behavior['max_rotational_vel']=maximum
+    behavior['min_rotational_vel']=minimum
+    return navigation
+
 def mapping_setup(context):
     config=Path(LaunchConfiguration('config').perform(context));c=yaml.safe_load(config.read_text())
     world=Path(c.get('world_file') or Path(get_package_share_directory('serving_robot_gazebo'))/'worlds/cafe_closed.world.sdf')
@@ -66,6 +80,7 @@ def mapping_setup(context):
         slam_source=nav_share/'config/slam.yaml';nav_source=nav_share/'config/nav2.yaml'
         slam,nav=mapping_precision_parameters(yaml.safe_load(slam_source.read_text()),
             yaml.safe_load(nav_source.read_text()),c['mapping_grid_resolution_m'],c['mapping_goal_tolerance_m'],bool(c.get('mapping_bootstrap_yaw_rad')),bool(c.get('mapping_planner_clearance_alignment')))
+        nav=mapping_scan_spin_parameters(nav)
         if c.get('mapping_oriented_observation',False):
             from serving_robot_mapping.mapping_oriented_geometry import mapping_oriented_parameters
             nav=mapping_oriented_parameters(nav)
@@ -82,6 +97,15 @@ def mapping_setup(context):
                 if c.get('mapping_bootstrap_yaw_rad') else [])+(
                 ['global_costmap.footprint','global_costmap.footprint_padding','global_costmap.inflation_layer.inflation_radius',
                  'planner_server.GridBased.allow_unknown'] if c.get('mapping_planner_clearance_alignment') else [])},indent=2))
+    else:
+        # ObservationSweep uses a dedicated, mapping-only Spin action. Keep it
+        # available in the normal mapping profile even without precision flags.
+        nav_share=Path(get_package_share_directory('serving_robot_navigation'))
+        nav_source=nav_share/'config/nav2.yaml'
+        nav=mapping_scan_spin_parameters(yaml.safe_load(nav_source.read_text()))
+        nav_path=config.parent/'mapping_nav2_params.yaml'
+        nav_path.write_text(yaml.safe_dump(nav),encoding='utf-8')
+        mapping_args.update(nav2_params_file=str(nav_path))
     team=IncludeLaunchDescription(PythonLaunchDescriptionSource(str(Path(get_package_share_directory('serving_robot_bringup'))/'launch/mapping_mode.launch.py')),
         launch_arguments=mapping_args.items())
     wait=ExecuteProcess(cmd=[sys.executable,str(Path(get_package_prefix('serving_robot_bringup'))/'lib/serving_robot_bringup/wait_for_ready.py'),'--name','mapping_world','--timeout','180','--gz-topic','/clock'],output='screen')
