@@ -284,6 +284,43 @@ def test_pending_draft_blocks_start_until_discarded(client):
     wait_ready(client)
 
 
+def test_successful_adoption_persists_new_map_and_revision_after_restart(tmp_path, repo):
+    with TestClient(build(tmp_path, repo)) as c:
+        c.post('/api/mapping/start')
+        info = (wait_ready(c), c.get('/api/stores/demo_store/map-review').json())[1]
+        saved = c.post('/api/mapping/save', json={'source_hash': info['source_hash'],
+                                                  'confirmed': True, 'strokes': []})
+        assert saved.status_code == 200
+        mark_autonomy_handoff_validated(saved.json())
+        adopted = c.post('/api/mapping/adopt', json={'confirmed': True})
+        assert adopted.status_code == 200 and adopted.json()['adopted'] is True
+        live_map = c.get('/api/stores/demo_store/map').json()
+        assert live_map['width'] == 40
+        rev = live_map['map_revision']
+        assert rev == 2
+    with TestClient(build(tmp_path, repo)) as c2:
+        live_map = c2.get('/api/stores/demo_store/map').json()
+        assert live_map['width'] == 40
+        assert live_map['map_revision'] == rev
+
+
+def test_repeated_adoption_after_success_returns_not_saved_without_revision_bump(client):
+    client.post('/api/mapping/start')
+    info = (wait_ready(client), client.get('/api/stores/demo_store/map-review').json())[1]
+    saved = client.post('/api/mapping/save', json={'source_hash': info['source_hash'],
+                                                  'confirmed': True, 'strokes': []})
+    assert saved.status_code == 200
+    mark_autonomy_handoff_validated(saved.json())
+    first = client.post('/api/mapping/adopt', json={'confirmed': True})
+    assert first.status_code == 200 and first.json()['adopted'] is True
+    rev = client.get('/api/stores/demo_store/map').json()['map_revision']
+
+    repeated = client.post('/api/mapping/adopt', json={'confirmed': True})
+    assert repeated.status_code == 409
+    assert repeated.json()['code'] == 'NOT_SAVED'
+    assert client.get('/api/stores/demo_store/map').json()['map_revision'] == rev
+
+
 def test_map_revision_survives_a_restart_of_the_backend(tmp_path, repo):
     with TestClient(build(tmp_path, repo)) as c:
         c.post('/api/mapping/start')
